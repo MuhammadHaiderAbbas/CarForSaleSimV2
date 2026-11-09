@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 34f1338a8d4783249bc2e94856844be0, type: 3}
+  m_Name: Car_sedan_avenue
+  m_EditorClassIdentifier: CarSales.Runtime::CarSales.CarDefinition
+  carId: sedan_avenue
+  displayName: Avenue
+  brand: Orion
+  category: 1
+  year: 2014
+  basePrice: 18000
+  popularity: 1
+  displayPrefab: {fileID: 3738676172444170594, guid: 1e8c00d2dd1f6954f8bd3948e916fc7c, type: 3}
+  thumbnail: {fileID: 0}
+  fuelType: Diesel
+  transmission: Automatic
+  description: Comfortable family sedan with a big boot.
+  physicsOverride: {fileID: 11400000, guid: 707e243ff59718a4face829d247a3a5e, type: 2}

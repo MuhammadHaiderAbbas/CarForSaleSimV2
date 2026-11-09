@@ -1,0 +1,12 @@
+﻿<Solution>
+  <Project Path="CarSales.Runtime.csproj" />
+  <Project Path="CarSales.Installer.csproj" />
+  <Project Path="CarSales.Studio.Editor.csproj" />
+  <Project Path="CarSales.Editor.csproj" />
+  <Project Path="CarSales.Tests.EditMode.csproj" />
+  <Project Path="CarSales.Sim.csproj" />
+  <Project Path="Assembly-CSharp.csproj" />
+  <Project Path="CarSales.Studio.Core.csproj" />
+  <Project Path="CarSales.Foundation.csproj" />
+  <Project Path="CarSales.Tests.PlayMode.csproj" />
+</Solution>

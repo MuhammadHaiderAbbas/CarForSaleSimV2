@@ -32,8 +32,21 @@ namespace CarSales
 
         public void Play(Sfx sfx, float volume = 1f)
         {
-            if (clips.TryGetValue(sfx, out var clip) && clip) source.PlayOneShot(clip, volume * sfxVolume);
+            if (clips.TryGetValue(sfx, out var clip) && clip) source.PlayOneShot(clip, volume * sfxVolume * GameSettings.GroupVolume(GroupOf(sfx)));
         }
+
+        // Phase 10 sound groups (Settings > Audio): 0 music, 1 sound effects, 2 ambience, 3 vehicles, 4 interface.
+        public const int GroupMusic = 0, GroupSfx = 1, GroupAmbience = 2, GroupVehicles = 3, GroupInterface = 4;
+
+        /// <summary>Clicks, notifications and errors are interface sounds; the rest are sound effects.</summary>
+        public static int GroupOf(Sfx sfx) => sfx == Sfx.Click || sfx == Sfx.Notify || sfx == Sfx.Error ? GroupInterface : GroupSfx;
+
+        /// <summary>Raised when a group slider moves, so looping sources (engines, ambience) pick up the new level.</summary>
+        public static event System.Action OnGroupVolumesChanged;
+        public static void ApplyGroupVolumes() => OnGroupVolumesChanged?.Invoke();
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatics() => OnGroupVolumesChanged = null;
 
         void BuildClips()
         {
@@ -46,6 +59,9 @@ namespace CarSales
             clips[Sfx.Success]   = Notes("Success", new[] { 523f, 659f, 784f, 1047f }, 0.1f, 0.5f, 1);
             clips[Sfx.Crash]     = Noise("Crash", 0.35f, 0.6f);
             foreach (var o in overrides) if (o.clip) clips[o.sfx] = o.clip;
+            // Phase 10: Resources/CarSalesAudioLibrary replaces any sound without touching the scene.
+            var lib = AudioLibrary.Load();
+            if (lib != null) foreach (var o in lib.sfx) if (o != null && o.clip) clips[o.sfx] = o.clip;
         }
 
         // wave: 0 sine, 1 sine+harmonics (bright), 2 square-ish (buzz), 3 bell (long decay)

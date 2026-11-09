@@ -1,0 +1,708 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &3455968917014994014
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1308437169069791984}
+  - component: {fileID: 6823137021587721180}
+  - component: {fileID: 3456030724097233845}
+  - component: {fileID: 2412290576926671335}
+  - component: {fileID: 2997828971060340845}
+  m_Layer: 5
+  m_Name: CarSalesUI
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1308437169069791984
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3455968917014994014}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0, y: 0, z: 0}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 794456993928497490}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0, y: 0}
+--- !u!223 &6823137021587721180
+Canvas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3455968917014994014}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_RenderMode: 0
+  m_Camera: {fileID: 0}
+  m_PlaneDistance: 100
+  m_PixelPerfect: 0
+  m_ReceivesEvents: 1
+  m_OverrideSorting: 0
+  m_OverridePixelPerfect: 0
+  m_SortingBucketNormalizedSize: 0
+  m_VertexColorAlwaysGammaSpace: 0
+  m_UseReflectionProbes: 0
+  m_AdditionalShaderChannelsFlag: 0
+  m_UpdateRectTransformForStandalone: 0
+  m_SortingLayerID: 0
+  m_SortingOrder: 10
+  m_TargetDisplay: 0
+--- !u!114 &3456030724097233845
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3455968917014994014}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.CanvasScaler
+  m_UiScaleMode: 1
+  m_ReferencePixelsPerUnit: 100
+  m_ScaleFactor: 1
+  m_ReferenceResolution: {x: 1920, y: 1080}
+  m_ScreenMatchMode: 0
+  m_MatchWidthOrHeight: 0.5
+  m_PhysicalUnit: 3
+  m_FallbackScreenDPI: 96
+  m_DefaultSpriteDPI: 96
+  m_DynamicPixelsPerUnit: 1
+  m_PresetInfoIsWorld: 0
+--- !u!114 &2412290576926671335
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3455968917014994014}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.GraphicRaycaster
+  m_IgnoreReversedGraphics: 1
+  m_BlockingObjects: 0
+  m_BlockingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+--- !u!114 &2997828971060340845
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3455968917014994014}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 010e141eefaa73c4d9b23e92e89236f2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarSales.Runtime::CarSales.UIManager
+  closeAction: {fileID: 0}
+  inventoryAction: {fileID: 0}
+  mapAction: {fileID: 0}
+  phoneAction: {fileID: 0}
+  hud: {fileID: 0}
+  computerHub: {fileID: 0}
+  home: {fileID: 0}
+  marketplace: {fileID: 0}
+  inventory: {fileID: 0}
+  messages: {fileID: 0}
+  upgrades: {fileID: 0}
+  bank: {fileID: 0}
+  stats: {fileID: 0}
+  realEstate: {fileID: 0}
+  map: {fileID: 0}
+  phone: {fileID: 0}
+  auction: {fileID: 0}
+  privateSeller: {fileID: 0}
+  listingEditor: {fileID: 0}
+  handover: {fileID: 0}
+  vehicleDetails: {fileID: 0}
+  inspection: {fileID: 0}
+  parts: {fileID: 0}
+  purchaseConfirm: {fileID: 0}
+  carMenu: {fileID: 0}
+  garage: {fileID: 0}
+  carWash: {fileID: 0}
+  priceUI: {fileID: 0}
+  negotiation: {fileID: 0}
+  dailyReport: {fileID: 0}
+  pause: {fileID: 0}
+  settings: {fileID: 0}
+  endScreen: {fileID: 0}
+--- !u!1 &5023566218843386635
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 794456993928497490}
+  - component: {fileID: 4607334329309426039}
+  - component: {fileID: 5989430671625210910}
+  - component: {fileID: 6779785871007549736}
+  - component: {fileID: 647887804534260667}
+  - component: {fileID: 6986663699922296801}
+  - component: {fileID: 6373441515227962532}
+  - component: {fileID: 844038640059004203}
+  - component: {fileID: 1567980131696078207}
+  - component: {fileID: 8255150616416493099}
+  - component: {fileID: 8914051390710775326}
+  - component: {fileID: 3421152325668644712}
+  - component: {fileID: 6199491134463575046}
+  - component: {fileID: 6060169303268173395}
+  - component: {fileID: 1635687065038116060}
+  - component: {fileID: 3426366961628870917}
+  - component: {fileID: 2106749069335453906}
+  - component: {fileID: 2085004956869292991}
+  - component: {fileID: 6427594087108543552}
+  - component: {fileID: 1544416066400605603}
+  - component: {fileID: 1004742278673902013}
+  - component: {fileID: 1211528688767754904}
+  - component: {fileID: 7510974825088379445}
+  - component: {fileID: 8051666778752929163}
+  - component: {fileID: 2299504110909960644}
+  - component: {fileID: 4561123585273025099}
+  - component: {fileID: 8084492483283039303}
+  - component: {fileID: 2457460896622997800}
+  m_Layer: 0
+  m_Name: CarSalesSystems
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &794456993928497490
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5023566218843386635}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1308437169069791984}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4607334329309426039
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5023566218843386635}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7628f4f204266c0489a2bf5afb7b1d8b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarSales.Runtime::CarSales.VehicleRegistry
+  carDisplayPrefab: {fileID: 5349413613359791561, guid: 315d34a7fd5027640902f2d7f7b264bc, type: 3}
+  fuelPricePerPercent: 0.9
+--- !u!114 &5989430671625210910
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5023566218843386635}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 11b3daeb89fc27543a69ce00e302ecd5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarSales.Runtime::CarSales.PropertyManager
+  properties:
+  - id: home_trailer
+    displayName: Starter Trailer
+    type: 0
+    price: 0
+    dailyIncome: 0
+    dailyCost: 0
+    wakeHour: 8
+    dailyReputation: 0
+    description: A tiny trailer. It has a bed. That's about it. Wake up at 08:00.
+    ownedAtStart: 1
+  - id: home_house
+    displayName: Suburban House
+    type: 0
+    price: 85000
+    dailyIncome: 0
+    dailyCost: 0
+    wakeHour: 7
+    dailyReputation: 0.5
+    description: Comfortable family house. Wake up at 07:00 well rested (+0.5 reputation per day).
+    ownedAtStart: 0
+  - id: home_villa
+    displayName: Hillside Villa
+    type: 0
+    price: 350000
+    dailyIncome: 0
+    dailyCost: 0
+    wakeHour: 6
+    dailyReputation: 1
+    description: Luxury villa with a pool. Wake up at 06:00 (+1 reputation per day). Customers will hear about it.
+    ownedAtStart: 0
+  - id: autoworld
+    displayName: AUTO WORLD
+    type: 1
+    price: 0
+    dailyIncome: 0
+    dailyCost: 0
+    wakeHour: 8
+    dailyReputation: 0
+    description: 'Your first dealership: showroom, office and lot.'
+    ownedAtStart: 1
+  - id: dealer_downtown
+    displayName: Downtown Motors
+    type: 1
+    price: 150000
+    dailyIncome: 0
+    dailyCost: 700
+    wakeHour: 8
+    dailyReputation: 0
+    description: Second dealership with 10 more parking spots and its own customers. Rent $700/day.
+    ownedAtStart: 0
+  - id: dealer_luxury
+    displayName: Luxury Lane
+    type: 1
+    price: 450000
+    dailyIncome: 0
+    dailyCost: 1800
+    wakeHour: 8
+    dailyReputation: 0
+    description: Premium dealership. Customers have 60% bigger budgets. Rent $1,800/day.
+    ownedAtStart: 0
+  - id: prop_apartments
+    displayName: Rental Apartments
+    type: 2
+    price: 60000
+    dailyIncome: 450
+    dailyCost: 0
+    wakeHour: 8
+    dailyReputation: 0
+    description: Small apartment block. Tenants pay $450 per day.
+    ownedAtStart: 0
+  - id: prop_parking
+    displayName: Parking Garage
+    type: 2
+    price: 140000
+    dailyIncome: 1100
+    dailyCost: 0
+    wakeHour: 8
+    dailyReputation: 0
+    description: Multi-storey car park. Earns $1,100 per day.
+    ownedAtStart: 0
+  - id: prop_office
+    displayName: Office Tower
+    type: 2
+    price: 500000
+    dailyIncome: 4200
+    dailyCost: 0
+    wakeHour: 8
+    dailyReputation: 0
+    description: Downtown office tower. Earns $4,200 per day.
+    ownedAtStart: 0
+--- !u!114 &6779785871007549736
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5023566218843386635}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cf3f1c9c4169a644cb1516a8a31bbcb9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarSales.Runtime::CarSales.TowService
+  towBaseFee: 120
+  towPerMeter: 0.8
+  taxiBaseFee: 25
+  taxiPerMeter: 0.25
+--- !u!114 &647887804534260667
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5023566218843386635}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 64caf6cf232fb8145be63b3a0e2edca7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarSales.Runtime::CarSales.AuctionManager
+  lotsPerHallSale: 8
+  lotsPerOnlineSale: 8
+  daysPublished: 7
+  catalogueDays: 2
+  openHour: 9
+  closeHour: 18
+  parkingBays: []
+--- !u!114 &6986663699922296801
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5023566218843386635}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1215f6c8355982f44a0f0a75d5146b33, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarSales.Runtime::CarSales.WorkshopManager
+--- !u!114 &6373441515227962532
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5023566218843386635}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a1d774a80ac44043b47ef529e267fdd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarSales.Runtime::CarSales.MarketManager
+--- !u!114 &844038640059004203
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5023566218843386635}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c84e1a0c85bbadb4684bd07e81494bc4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarSales.Runtime::CarSales.StaffManager
+--- !u!114 &1567980131696078207
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5023566218843386635}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab60e7f83d08a4547a3d3dfd40bb56e8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarSales.Runtime::CarSales.CrmManager
+--- !u!114 &8255150616416493099
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5023566218843386635}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ca2fb1c1c3731a24f9dd5944b652ebd9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarSales.Runtime::CarSales.SourcingManager
+--- !u!114 &8914051390710775326
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5023566218843386635}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0f0b8bfefb33bf245a5d0c9bc7dcacf6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarSales.Runtime::CarSales.WorldManager
+--- !u!114 &3421152325668644712
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5023566218843386635}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0f7b1e9820786ee4ea002c91f0d5975a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarSales.Runtime::CarSales.BusinessManager
+--- !u!114 &6199491134463575046
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5023566218843386635}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a06f9bc17f085fb488a2cef68ce31a78, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarSales.Runtime::CarSales.AmbienceManager
+--- !u!114 &6060169303268173395
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5023566218843386635}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1b6b556259f7e349ad1380bc9b91286, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarSales.Runtime::CarSales.CarSalesBootstrap
+  database: {fileID: 11400000, guid: 2199cd7dbd1d91a47987bb79f9d07103, type: 2}
+--- !u!114 &1635687065038116060
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5023566218843386635}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 193be31ab56621b439e86ee4552b7ebc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarSales.Runtime::CarSales.EconomyManager
+  startingMoney: 50000
+  startingReputation: 50
+  ledgerDaysKept: 60
+--- !u!114 &3426366961628870917
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5023566218843386635}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d1d1b5809550d7340a6bff589b2713cb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarSales.Runtime::CarSales.InventoryManager
+--- !u!114 &2106749069335453906
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5023566218843386635}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa66d5f9eee675a499dff5c364d4277f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarSales.Runtime::CarSales.MarketplaceManager
+  listingsPerDay: 8
+  priceVsMarket: {x: 0.7, y: 0.95}
+  lotListingsPerDay: 8
+  lotPriceVsMarket: {x: 0.62, y: 0.88}
+  deliveryFee: 300
+--- !u!114 &2085004956869292991
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5023566218843386635}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e6789538a3ced7e43b27544f2ddf64be, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarSales.Runtime::CarSales.DayCycleManager
+  realSecondsPerGameHour: 50
+  openHour: 8
+  closeHour: 20
+  passOutHour: 26
+  baseRent: 500
+  rentPerCar: 50
+  passOutFee: 300
+  toggleShopAction: {fileID: 0}
+--- !u!114 &6427594087108543552
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5023566218843386635}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b65be8c5962b84642a8ec34c4bcbd448, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarSales.Runtime::CarSales.SaveManager
+  loadOnStart: 1
+  starterCars: 2
+  personalCarId: hatch_velo
+--- !u!114 &1544416066400605603
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5023566218843386635}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b0579f634ca5e6f468eda5c81be2b54b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarSales.Runtime::CarSales.UpgradeManager
+  upgrades:
+  - type: 0
+    displayName: Lot Expansion
+    description: Unlocks 3 more parking spots per level.
+    costs: 983a0000b8880000i
+  - type: 1
+    displayName: Marketing
+    description: More customers, arriving faster, with 10% bigger budgets per level.
+    costs: 401f0000204e0000c8af0000i
+  - type: 2
+    displayName: Mechanic Workshop
+    description: Repairs 15% cheaper per level. Level 1+ reveals the TRUE condition of marketplace cars.
+    costs: 10270000a861000050c30000i
+  - type: 3
+    displayName: Detailing Bay
+    description: Cleaning 35% cheaper per level.
+    costs: a00f0000e02e0000i
+  - type: 4
+    displayName: Showroom Upgrade
+    description: Customers are 5% more likely to buy per level, and you gain +0.5 reputation per day per level.
+    costs: e02e00003075000060ea0000i
+--- !u!114 &1004742278673902013
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5023566218843386635}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2914b12d479c903428bb54b9c0a8734e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarSales.Runtime::CarSales.BankManager
+  dailyInterest: 0.02
+  baseLimit: 25000
+  limitPerReputationPoint: 1000
+--- !u!114 &1211528688767754904
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5023566218843386635}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b3583758dfd94b944b991287fe73d2b8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarSales.Runtime::CarSales.ProgressManager
+  winNetWorth: 1000000
+  bankruptcyDays: 3
+--- !u!114 &7510974825088379445
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5023566218843386635}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a69519f0cb62fed4aa31c8c3166cb85a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarSales.Runtime::CarSales.MessageManager
+  maxMessages: 40
+  offersPerDay: {x: 1, y: 2}
+  offerPriceVsValue: {x: 0.6, y: 0.8}
+--- !u!114 &8051666778752929163
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5023566218843386635}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66cfbfcdbc2cee74ba1aafc606b1f64e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarSales.Runtime::CarSales.AudioManager
+  overrides: []
+  sfxVolume: 0.7
+--- !u!114 &2299504110909960644
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5023566218843386635}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 650122d873c76a940ae845fd0617490a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarSales.Runtime::CarSales.DayNightLighting
+  driveSun: 1
+  sun: {fileID: 0}
+  sunrise: 6
+  sunset: 20.5
+  maxIntensity: 1.3
+  noonColor: {r: 1, g: 0.96, b: 0.9, a: 1}
+  eveningColor: {r: 1, g: 0.55, b: 0.3, a: 1}
+  nightSkyExposure: 0.08
+--- !u!114 &4561123585273025099
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5023566218843386635}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3c09046e533ef394eb24345d07dab47c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarSales.Runtime::CarSales.ThumbnailService
+  size: {x: 480, y: 300}
+  maxCached: 48
+  background: {r: 0.1, g: 0.15, b: 0.27, a: 1}
+  studioPosition: {x: 0, y: -500, z: 0}
+--- !u!114 &8084492483283039303
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5023566218843386635}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7eec9525cb4fae540ae2c9f1139c9d67, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarSales.Runtime::CarSales.TestDriveManager
+  moveAction: {fileID: 0}
+  brakeAction: {fileID: 0}
+  exitAction: {fileID: 0}
+  vehicleAction: {fileID: 0}
+  cameraAction: {fileID: 0}
+  gearUpAction: {fileID: 0}
+  gearDownAction: {fileID: 0}
+  fuelPercentPerKm: 4
+--- !u!114 &2457460896622997800
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5023566218843386635}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5296a4e1120aca04b8204e68a32c1084, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: CarSales.Runtime::CarSales.DebugCheats

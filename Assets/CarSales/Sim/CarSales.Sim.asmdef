@@ -1,0 +1,14 @@
+{
+    "name": "CarSales.Sim",
+    "rootNamespace": "CarSales.Sim",
+    "references": [ "CarSales.Foundation" ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}

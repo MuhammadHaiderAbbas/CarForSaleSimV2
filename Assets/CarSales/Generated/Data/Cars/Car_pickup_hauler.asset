@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 34f1338a8d4783249bc2e94856844be0, type: 3}
+  m_Name: Car_pickup_hauler
+  m_EditorClassIdentifier: CarSales.Runtime::CarSales.CarDefinition
+  carId: pickup_hauler
+  displayName: Hauler
+  brand: Titan
+  category: 4
+  year: 2015
+  basePrice: 28000
+  popularity: 1
+  displayPrefab: {fileID: 2678887548544182709, guid: a7773ac1399199b49b2b919084eec5fa, type: 3}
+  thumbnail: {fileID: 0}
+  fuelType: Diesel
+  transmission: Manual
+  description: Workhorse pickup truck. Tradespeople buy these all day.
+  physicsOverride: {fileID: 11400000, guid: 9c87683bb7040d444bd7a44f99a6732e, type: 2}

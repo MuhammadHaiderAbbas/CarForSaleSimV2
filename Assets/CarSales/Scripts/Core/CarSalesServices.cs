@@ -28,6 +28,13 @@ namespace CarSales
         public static PropertyManager Properties;
         public static TowService Tow;
         public static AuctionManager Auction;
+        public static WorkshopManager Workshop;
+        public static MarketManager Market;
+        public static StaffManager Staff;
+        public static CrmManager Crm;
+        public static SourcingManager Sourcing;
+        public static WorldManager World;
+        public static BusinessManager Business;
 
         /// <summary>Plays a sound if an AudioManager exists in the scene.</summary>
         public static void PlaySfx(Sfx sfx, float volume = 1f)

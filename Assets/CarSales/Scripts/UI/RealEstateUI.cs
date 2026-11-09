@@ -45,10 +45,10 @@ namespace CarSales
             var h = UIFactory.Horizontal(card, 14, 16f);
             h.childForceExpandHeight = false;
             string glyph = p.type == PropertyType.Home ? "H" : p.type == PropertyType.Dealership ? "D" : "$";
-            Color c = p.type == PropertyType.Home ? new Color(0.2f, 0.75f, 0.6f) : p.type == PropertyType.Dealership ? UIFactory.Accent : UIFactory.Gold;
+            Color c = p.type == PropertyType.Home ? UIFactory.Home : p.type == PropertyType.Dealership ? UIFactory.Accent : UIFactory.Gold;
             UIFactory.Icon(card.transform, c, glyph, 54f);
             var col = UIFactory.VCol(card.transform, 3f);
-            UIFactory.Text(col, p.displayName + (props.ActiveHome == p.id ? "  <color=#6f6>(your home)</color>" : ""), 22, UIFactory.TextMain, TextAlignmentOptions.Left, true);
+            UIFactory.Text(col, p.displayName + (props.ActiveHome == p.id ? $"  <color={UIFactory.Hex(UIFactory.Good)}>(your home)</color>" : ""), 22, UIFactory.TextMain, TextAlignmentOptions.Left, true);
             UIFactory.Text(col, p.description, 15, UIFactory.TextDim, TextAlignmentOptions.Left);
             string money = p.dailyIncome > 0 ? $"+{UIFactory.Money(p.dailyIncome)}/day" : p.dailyCost > 0 ? $"-{UIFactory.Money(p.dailyCost)}/day" : "";
             var info = UIFactory.Text(card.transform, (p.price > 0 ? UIFactory.Money(p.price) : "Free") + (money != "" ? $"\n<size=75%>{money}</size>" : ""),

@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8de98391f8dd67042967da8cdf60f029, type: 3}
+  m_Name: CarSalesDatabase
+  m_EditorClassIdentifier: CarSales.Runtime::CarSales.CarDatabase
+  cars:
+  - {fileID: 11400000, guid: e10deb5d7fcb1be469aa7b94f5075042, type: 2}
+  - {fileID: 11400000, guid: 289ad8746a95e6a4f805aafc4112f6b5, type: 2}
+  - {fileID: 11400000, guid: 4b9f1837cfa73de4f8d03e03def68d87, type: 2}
+  - {fileID: 11400000, guid: e585d7d80f6a71e44a8d4ca497c09c52, type: 2}
+  - {fileID: 11400000, guid: e53a603cbffaaf242a72f0620a25e21a, type: 2}
+  - {fileID: 11400000, guid: 1c1d8b34efa629e45b9311cc8235eabe, type: 2}
+  - {fileID: 11400000, guid: edee413b25979784b83a4edbbda89ec8, type: 2}
+  - {fileID: 11400000, guid: e51161c49aed7cc47a6c1a187275cc5b, type: 2}
+  - {fileID: 11400000, guid: 0cbc3de57c414dc46bbb5ebc3701ef8f, type: 2}

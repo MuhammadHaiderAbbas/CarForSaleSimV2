@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 34f1338a8d4783249bc2e94856844be0, type: 3}
+  m_Name: Car_suv_ridge
+  m_EditorClassIdentifier: CarSales.Runtime::CarSales.CarDefinition
+  carId: suv_ridge
+  displayName: Ridge
+  brand: Titan
+  category: 2
+  year: 2017
+  basePrice: 32000
+  popularity: 1.2
+  displayPrefab: {fileID: 315181353243853338, guid: 3005313d319a7c34eb71ce5f24d2ceb7, type: 3}
+  thumbnail: {fileID: 0}
+  fuelType: Diesel
+  transmission: Automatic
+  description: Rugged 4x4 SUV. Families love it.
+  physicsOverride: {fileID: 11400000, guid: e3db362357ec3cc41840728f99cd6262, type: 2}

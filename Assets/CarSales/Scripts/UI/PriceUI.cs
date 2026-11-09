@@ -71,7 +71,7 @@ namespace CarSales
                              : ratio <= 1.2f ? "Fair price: most customers will consider it."
                              : "Expensive: few customers will be interested.") +
                               $"\nProfit at this price: <color={UIFactory.Hex(profit >= 0 ? UIFactory.Good : UIFactory.Bad)}><b>{UIFactory.Money(profit)}</b></color>" +
-                              (car.Data.cleanliness < 40 ? "\n<color=#fb4>This car is dirty - customers will be less interested.</color>" : "");
+                              (car.Data.cleanliness < 40 ? $"\n<color={UIFactory.Hex(UIFactory.Warn)}>This car is dirty - customers will be less interested.</color>" : "");
         }
 
         void Confirm()

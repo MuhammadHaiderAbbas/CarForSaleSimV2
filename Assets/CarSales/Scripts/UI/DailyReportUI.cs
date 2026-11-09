@@ -1,3 +1,5 @@
+using System.Linq;
+using CarSales.Foundation;
 using TMPro;
 using UnityEngine;
 
@@ -6,11 +8,11 @@ namespace CarSales
     /// <summary>Shown when you wake up: yesterday's results.</summary>
     public class DailyReportUI : UIPanel
     {
-        TextMeshProUGUI title, subtitle, sold, bought, revenue, expenses, rent, interest, income, profit, balance, rep, worth, warning;
+        TextMeshProUGUI title, subtitle, sold, bought, revenue, expenses, rent, interest, income, profit, balance, rep, worth, warning, breakdown;
 
         public override void Build()
         {
-            var body = UIFactory.Window(Root, "Good Morning!", new Vector2(740f, 820f), null);
+            var body = UIFactory.Window(Root, "Good Morning!", new Vector2(760f, 900f), null);
             UIFactory.Vertical(body, 0, 3f);
             title = UIFactory.Text(body, "", 34, UIFactory.TextMain, TextAlignmentOptions.Center, true);
             UIFactory.LE(title, h: 48);
@@ -24,6 +26,8 @@ namespace CarSales
             interest = UIFactory.SpecRow(body, "  incl. loan interest");
             income = UIFactory.SpecRow(body, "Property income");
             profit = UIFactory.SpecRow(body, "Profit on sold cars");
+            breakdown = UIFactory.Text(body, "", 15, UIFactory.TextDim, TextAlignmentOptions.TopLeft);
+            UIFactory.LE(breakdown, h: 72);
             UIFactory.Divider(body);
             balance = UIFactory.SpecRow(body, "Cash balance", 40);
             rep = UIFactory.SpecRow(body, "Reputation");
@@ -54,6 +58,14 @@ namespace CarSales
             profit.text = UIFactory.Money(r.profit);
             balance.text = $"<size=130%><color={UIFactory.Hex(eco.Money < 0 ? UIFactory.Bad : UIFactory.Gold)}>{UIFactory.Money(eco.Money)}</color></size>";
             rep.text = $"{eco.Reputation:0}/100";
+            var lines = eco.Ledger.Summarize(r.day, r.day).Lines();
+            string Join(bool income) => string.Join("  ·  ", lines.Where(l => (l.Value > 0) == income).Take(5)
+                                                               .Select(l => $"{TxCategories.DisplayName(l.Key)} {UIFactory.Money(System.Math.Abs(l.Value))}"));
+            string inc = Join(true), outg = Join(false);
+            breakdown.text = (inc.Length > 0 ? $"<color={UIFactory.Hex(UIFactory.Good)}>In:</color> {inc}\n" : "") +
+                             (outg.Length > 0 ? $"<color={UIFactory.Hex(UIFactory.Bad)}>Out:</color> {outg}" : "") +
+                             (inc.Length + outg.Length == 0 ? "No money moved yesterday." : "") +
+                             "\n<size=85%>Full details: computer > Bank > Account statement</size>";
             worth.text = p ? UIFactory.Money(p.NetWorth) : "-";
             warning.text = p && p.DaysInDebt > 0
                 ? $"IN DEBT: day {p.DaysInDebt}/{p.BankruptcyDays}. Get above $0 or you go bankrupt! (Sell cars, Quick Sell, or take a loan.)"

@@ -1,0 +1,67 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 57cd2cb3d0e0e2b4d9bd687580eea2dd, type: 3}
+  m_Name: Physics_sedan_avenuegt
+  m_EditorClassIdentifier: CarSales.Runtime::CarSales.VehiclePhysicsProfileAsset
+  profile:
+    name: Avenue GT
+    vehicleClass: 3
+    powertrain: 0
+    drivetrain: 1
+    engine:
+      idleRpm: 750
+      redlineRpm: 6800
+      peakTorqueNm: 380
+      peakTorqueRpm: 1700
+      plateauEndRpm: 4600
+      engineBrakeNm: 60.8
+    gearbox:
+      ratios:
+      - 3.5
+      - 2.2
+      - 1.5
+      - 1.15
+      - 0.92
+      - 0.75
+      reverseRatio: 3.325
+      finalDrive: 3.5
+      upshiftRpm: 6400
+      downshiftRpm: 2100
+      shiftTime: 0.25
+      efficiency: 0.9
+    electric:
+      maxTorqueNm: 300
+      maxPowerKw: 150
+      maxRpm: 12000
+      ratio: 9
+      regenFraction: 0.25
+      efficiency: 0.92
+    chassis:
+      massKg: 1520
+      centerOfMassHeight: 0.46
+      wheelRadius: 0.33
+      suspensionDistance: 0.2
+      springScale: 1
+      damperScale: 1
+      forwardGrip: 1
+      sidewaysGrip: 1.05
+      maxSteerAngle: 35
+      highSpeedSteerFactor: 0.35
+      antiRollForce: 6000
+      brakeStrength: 1
+      frontBrakeBias: 0.65
+      handbrakeTorque: 2500
+      dragArea: 0.66
+      rollingResistance: 0.013
+      downforce: 1.2
+      topSpeedLimitKmh: 250
+    energyPercentPerKm: 4

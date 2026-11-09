@@ -1,3 +1,4 @@
+using CarSales.Foundation;
 using System;
 using UnityEngine;
 
@@ -24,7 +25,7 @@ namespace CarSales
             amount = Mathf.Min(amount, Available);
             if (amount <= 0) { message = "Your loan limit is reached. Improve your reputation to borrow more."; return false; }
             Loan += amount;
-            CarSalesServices.Economy.AddMoney(amount);
+            CarSalesServices.Economy.AddMoney(amount, TxCategory.LoanDrawdown, "Loan");
             OnLoanChanged?.Invoke();
             CarSalesServices.PlaySfx(Sfx.Coin);
             message = $"Borrowed ${amount:N0}. Interest: {dailyInterest * 100f:0.#}% per day.";
@@ -35,7 +36,7 @@ namespace CarSales
         {
             amount = Mathf.Min(amount, Loan, CarSalesServices.Economy.Money);
             if (Loan <= 0) { message = "You have no loan."; return false; }
-            if (amount <= 0 || !CarSalesServices.Economy.TrySpend(amount)) { message = "Not enough money to repay."; return false; }
+            if (amount <= 0 || !CarSalesServices.Economy.TrySpend(amount, TxCategory.LoanRepayment, "Loan repayment")) { message = "Not enough money to repay."; return false; }
             Loan -= amount;
             OnLoanChanged?.Invoke();
             CarSalesServices.PlaySfx(Sfx.Purchase);
@@ -48,7 +49,7 @@ namespace CarSales
         {
             if (Loan <= 0) return 0;
             int interest = TomorrowInterest;
-            CarSalesServices.Economy.ForceSpend(interest);
+            CarSalesServices.Economy.ForceSpend(interest, TxCategory.LoanInterest, $"Interest on {UIFactory.Money(Loan)} loan");
             return interest;
         }
 

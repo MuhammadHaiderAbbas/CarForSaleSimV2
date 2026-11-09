@@ -1,3 +1,4 @@
+using CarSales.Foundation;
 using System.Collections;
 using TMPro;
 using UnityEngine;
@@ -23,7 +24,7 @@ namespace CarSales
             cleanBar = UIFactory.ProgressBar(body, UIFactory.Accent, 16f);
             costText = UIFactory.Text(body, "", 26, UIFactory.Gold, TextAlignmentOptions.Left, true);
             statusText = UIFactory.Text(body, "", 18, UIFactory.Accent, TextAlignmentOptions.Left, true);
-            progress = UIFactory.ProgressBar(body, new Color(0.4f, 0.8f, 1f), 14f);
+            progress = UIFactory.ProgressBar(body, UIFactory.Info, 14f);
             UIFactory.Spacer(body);
             var row = UIFactory.HRow(body, 56, 12);
             backButton = UIFactory.Btn(row, "Back", UIFactory.Neutral, Back, 54f);
@@ -83,7 +84,7 @@ namespace CarSales
             working = false;
             backButton.interactable = true;
             int cost = CarValueCalculator.CleanCost();
-            if (!CarSalesServices.Economy.TrySpend(cost)) { CarSalesServices.UI.Error("Not enough money!"); Refresh(); return; }
+            if (!CarSalesServices.Economy.TrySpend(cost, TxCategory.Cleaning, $"Car wash - {car.Data.Name}", car.Data.instanceId)) { CarSalesServices.UI.Error("Not enough money!"); Refresh(); return; }
             car.Data.cleanliness = 100f;
             car.Data.repairSpent += cost;
             CarSalesServices.DayCycle.RegisterExpense(cost);

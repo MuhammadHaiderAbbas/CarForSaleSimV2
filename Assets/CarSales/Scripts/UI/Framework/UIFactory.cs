@@ -8,28 +8,54 @@ namespace CarSales
     /// <summary>
     /// Builds the whole Car Sales UI from code (theme colours, procedurally generated rounded sprites, icons,
     /// buttons, windows, lists...). No prefabs or Inspector wiring needed.
-    /// Change the colours below to re-theme everything.
+    /// Colours come from <see cref="UITheme"/>.
     /// </summary>
-    public static class UIFactory
+    public static partial class UIFactory
     {
         // ------------------------------------------------------------------ THEME
-        public static readonly Color WindowBg   = new Color(0.035f, 0.06f, 0.12f, 0.98f);
-        public static readonly Color HeaderBg   = new Color(0.055f, 0.1f, 0.2f, 1f);
-        public static readonly Color CardBg     = new Color(0.075f, 0.115f, 0.215f, 1f);
-        public static readonly Color CardLight  = new Color(0.11f, 0.17f, 0.3f, 1f);
-        public static readonly Color Line       = new Color(0.25f, 0.5f, 0.95f, 0.45f);
-        public static readonly Color Accent     = new Color(0.13f, 0.47f, 0.95f, 1f);
-        public static readonly Color AccentDark = new Color(0.09f, 0.28f, 0.6f, 1f);
-        public static readonly Color Good       = new Color(0.2f, 0.72f, 0.38f, 1f);
-        public static readonly Color Warn       = new Color(0.96f, 0.62f, 0.12f, 1f);
-        public static readonly Color Bad        = new Color(0.88f, 0.28f, 0.28f, 1f);
-        public static readonly Color Neutral    = new Color(0.24f, 0.29f, 0.4f, 1f);
-        public static readonly Color TextMain   = new Color(0.93f, 0.96f, 1f, 1f);
-        public static readonly Color TextDim    = new Color(0.62f, 0.7f, 0.83f, 1f);
-        public static readonly Color Gold       = new Color(1f, 0.83f, 0.3f, 1f);
-        public static readonly Color Backdrop   = new Color(0f, 0.01f, 0.04f, 0.6f);
-        public static readonly Color Clear      = new Color(1f, 1f, 1f, 0f);
-        public static readonly Color Ghost      = new Color(1f, 1f, 1f, 0.07f);
+        // Colours come from the active UITheme (Settings → Theme). Screens must use these tokens, never literal colours.
+        static UIPalette T => UITheme.Current;
+        public static Color WindowBg => T.windowBg;
+        public static Color HeaderBg => T.headerBg;
+        public static Color CardBg => T.cardBg;
+        public static Color CardLight => T.cardLight;
+        public static Color MenuBg => T.menuBg;
+        public static Color HudBg => T.hudBg;
+        public static Color HudBgStrong => T.hudBgStrong;
+        public static Color ToastBg => T.toastBg;
+        public static Color PictureBg => T.pictureBg;
+        public static Color Overlay => T.overlay;
+        public static Color Line => T.line;
+        public static Color Accent => T.accent;
+        public static Color AccentDark => T.accentDark;
+        public static Color Good => T.good;
+        public static Color Warn => T.warn;
+        public static Color Bad => T.bad;
+        public static Color Neutral => T.neutral;
+        public static Color TextMain => T.textMain;
+        public static Color TextDim => T.textDim;
+        public static Color TextFaint => T.textFaint;
+        public static Color ChatPlayer => T.chatPlayer;
+        public static Color Gold => T.gold;
+        public static Color Info => T.info;
+        public static Color Special => T.special;
+        public static Color Personal => T.personal;
+        public static Color Home => T.home;
+        public static Color Crosshair => T.crosshair;
+        public static Color MapBg => T.mapBg;
+        public static Color MapFrame => T.mapFrame;
+        public static Color Backdrop => T.backdrop;
+        public static Color Ghost => T.ghost;
+        public static readonly Color Clear = new Color(1f, 1f, 1f, 0f);
+
+        public static Color WithAlpha(Color c, float a) { c.a = a; return c; }
+
+        /// <summary>Readable text colour on top of <paramref name="background"/> (dark text on light buttons).</summary>
+        public static Color ContrastText(Color background)
+        {
+            float lum = 0.2126f * background.r + 0.7152f * background.g + 0.0722f * background.b;
+            return lum > 0.62f ? new Color(0.08f, 0.1f, 0.16f) : Color.white;
+        }
 
         // ------------------------------------------------------------------ SPRITES (generated once)
         static Sprite rounded, circle, ring, arrow, check;
@@ -277,21 +303,27 @@ namespace CarSales
             btn.targetGraphic = img;
             var cb = btn.colors;
             cb.normalColor = Color.white;
-            cb.highlightedColor = new Color(0.82f, 0.9f, 1f);
+            cb.highlightedColor = T.buttonHover;
             cb.selectedColor = Color.white;
-            cb.pressedColor = new Color(0.65f, 0.72f, 0.85f);
-            cb.disabledColor = new Color(0.55f, 0.55f, 0.6f, 0.55f);
+            cb.pressedColor = T.buttonPressed;
+            cb.disabledColor = T.buttonDisabled;
             btn.colors = cb;
             if (onClick != null) btn.onClick.AddListener(onClick);
             btn.onClick.AddListener(() => CarSalesServices.PlaySfx(Sfx.Click, 0.5f));
             LE(img, h: height);
-            labelText = Text(img.transform, label, fontSize, Color.white, TextAlignmentOptions.Center, true, "Label");
+            labelText = Text(img.transform, label, fontSize, ContrastText(color), TextAlignmentOptions.Center, true, "Label");
             Stretch(labelText.rectTransform, 4f);
             return btn;
         }
 
         /// <summary>Recolours a button made with Btn (keeps hover tint behaviour).</summary>
-        public static void SetButtonColor(Button b, Color c) { if (b && b.targetGraphic) b.targetGraphic.color = c; }
+        public static void SetButtonColor(Button b, Color c)
+        {
+            if (!b || !b.targetGraphic) return;
+            b.targetGraphic.color = c;
+            var label = b.GetComponentInChildren<TextMeshProUGUI>();
+            if (label) label.color = ContrastText(c);
+        }
 
         public static Image Icon(Transform parent, Color color, string glyph, float size, bool useCheck = false)
         {
@@ -334,9 +366,9 @@ namespace CarSales
         public static TextMeshProUGUI KeyHint(Transform parent, string key, string action)
         {
             var row = HRow(parent, 34, 10, "Key_" + key, false);
-            var cap = Panel(row, "Key", new Color(1f, 1f, 1f, 0.92f), 3f);
+            var cap = Panel(row, "Key", T.keyCap, 3f);
             LE(cap, h: 32, w: Mathf.Max(34, key.Length * 11 + 18), flexW: 0);
-            var k = Text(cap.transform, key, 16, new Color(0.08f, 0.1f, 0.16f), TextAlignmentOptions.Center, true);
+            var k = Text(cap.transform, key, 16, T.keyCapText, TextAlignmentOptions.Center, true);
             Stretch(k.rectTransform);
             var t = Text(row, action, 17, TextMain, TextAlignmentOptions.Left);
             LE(t, flexW: 1);
@@ -364,13 +396,13 @@ namespace CarSales
         /// <summary>Rounded picture frame that shows a live-rendered photo of the car.</summary>
         public static RawImage CarPicture(Transform parent, float height, float width = -1)
         {
-            var frame = Panel(parent, "CarPicture", new Color(0.09f, 0.14f, 0.26f), 1.4f);
+            var frame = Panel(parent, "CarPicture", T.pictureBg, 1.4f);
             LE(frame, h: height, w: width, flexW: width > 0 ? 0 : 1);
             frame.gameObject.AddComponent<Mask>().showMaskGraphic = true;
             var raw = Rect("Photo", frame.transform).gameObject.AddComponent<RawImage>();
             Stretch(raw.rectTransform);
             raw.raycastTarget = false;
-            raw.color = new Color(1f, 1f, 1f, 0f);
+            raw.color = Clear;
             return raw;
         }
 
@@ -379,7 +411,7 @@ namespace CarSales
             if (!raw) return;
             var tex = ThumbnailService.Instance && car != null ? ThumbnailService.Instance.Get(car) : null;
             raw.texture = tex;
-            raw.color = tex ? Color.white : new Color(1f, 1f, 1f, 0f);
+            raw.color = tex ? Color.white : Clear;
         }
 
         public static RectTransform ScrollList(Transform parent, float spacing = 10f, string name = "Scroll", bool vertical = true)
@@ -460,7 +492,7 @@ namespace CarSales
             if (input.textComponent) { input.textComponent.font = TMP_Settings.defaultFontAsset; input.textComponent.color = TextMain; input.textComponent.fontSize = 19; }
             if (input.placeholder is TMP_Text ph) { ph.font = TMP_Settings.defaultFontAsset; ph.text = placeholder; ph.color = TextDim; ph.fontSize = 19; }
             input.caretColor = TextMain;
-            input.selectionColor = new Color(0.2f, 0.5f, 1f, 0.5f);
+            input.selectionColor = T.selection;
             LE(go.GetComponent<RectTransform>(), h: height, flexW: 1);
             return input;
         }
@@ -479,7 +511,7 @@ namespace CarSales
             outline.effectColor = Line;
             outline.effectDistance = new Vector2(1.5f, -1.5f);
             var shadow = win.gameObject.AddComponent<Shadow>();
-            shadow.effectColor = new Color(0f, 0f, 0f, 0.6f);
+            shadow.effectColor = T.shadow;
             shadow.effectDistance = new Vector2(0f, -8f);
 
             var head = Panel(win.transform, "Header", HeaderBg, 1f);

@@ -20,7 +20,7 @@ namespace CarSales
                 case ServiceType.Workshop: return "[E] Mechanic - repair a car parked in a service bay";
                 case ServiceType.CarWash: return "[E] Car wash - wash a car parked in the wash bay";
                 case ServiceType.FuelStation: return $"[E] Fuel kiosk - fill up cars at the pumps (${CarSalesServices.Vehicles.FuelPricePerPercent:0.##}/%)";
-                case ServiceType.Auction: return "[E] Auction desk - join today's car auction (10:00-17:00)";
+                case ServiceType.Auction: return "[E] Auction desk: register, catalogue, invoices (sales in the hall behind)";
                 default: return "[E] Service";
             }
         }

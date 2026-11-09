@@ -68,7 +68,7 @@ namespace CarSales
                 $"Clean: {car.cleanliness:0}%   Fuel: {car.fuel:0}%   {car.mileage:N0} km\n<color={UIFactory.Hex(UIFactory.Accent)}>{CarSalesServices.Vehicles.LocationText(car)}</color>",
                 15, UIFactory.TextDim, TextAlignmentOptions.Left);
 
-            Color chipColor = car.personal ? new Color(0.1f, 0.6f, 0.65f) : car.state == CarState.Listed ? UIFactory.Good : car.state == CarState.NeedsRepair ? UIFactory.Warn : UIFactory.Neutral;
+            Color chipColor = car.personal ? UIFactory.Personal : car.state == CarState.Listed ? UIFactory.Good : car.state == CarState.NeedsRepair ? UIFactory.Warn : UIFactory.Neutral;
             string chipText = car.personal ? "Personal car" : car.state == CarState.Listed ? $"For sale {UIFactory.Money(car.listedPrice)}" : car.state == CarState.NeedsRepair ? "Needs repair" : "Ready";
             var chipRow = UIFactory.HRow(col, 26, 6, "Chips", false);
             UIFactory.Chip(chipRow, chipText, chipColor, out _);
@@ -78,6 +78,8 @@ namespace CarSales
                                        22, UIFactory.Gold, TextAlignmentOptions.Right, true);
             UIFactory.LE(value, w: 150, flexW: 0);
 
+            var file = UIFactory.Btn(row.transform, "File", UIFactory.Neutral, () => CarSalesServices.UI.vehicleDetails.ShowOwned(car), 44f, 17f);
+            UIFactory.LE(file, h: 44, w: 80, flexW: 0);
             var manage = UIFactory.Btn(row.transform, "Manage", UIFactory.Accent, () => Manage(car), 44f, 17f);
             UIFactory.LE(manage, h: 44, w: 120, flexW: 0);
             bool confirming = confirmSellId == car.instanceId;

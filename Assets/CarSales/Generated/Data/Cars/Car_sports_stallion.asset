@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 34f1338a8d4783249bc2e94856844be0, type: 3}
+  m_Name: Car_sports_stallion
+  m_EditorClassIdentifier: CarSales.Runtime::CarSales.CarDefinition
+  carId: sports_stallion
+  displayName: Stallion R
+  brand: Vortex
+  category: 3
+  year: 2018
+  basePrice: 55000
+  popularity: 1.3
+  displayPrefab: {fileID: 4480674761592993729, guid: 00d9ce90af04c824dab306a6bc9e0b59, type: 3}
+  thumbnail: {fileID: 0}
+  fuelType: Petrol
+  transmission: Manual
+  description: Two-door sports coupe. Fast, loud and very desirable.
+  physicsOverride: {fileID: 11400000, guid: f0305d7244cab924e8370c2f6ac13f76, type: 2}

@@ -1,0 +1,23 @@
+{
+    "name": "CarSales.Tests.PlayMode",
+    "rootNamespace": "CarSales.Tests.PlayMode",
+    "references": [
+        "CarSales.Foundation",
+        "CarSales.Sim",
+        "CarSales.Runtime",
+        "UnityEngine.TestRunner"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [ "nunit.framework.dll" ],
+    "autoReferenced": false,
+    "defineConstraints": [ "UNITY_INCLUDE_TESTS", "CARSALES_INPUTSYSTEM", "CARSALES_AINAV", "CARSALES_UGUI" ],
+    "versionDefines": [
+        { "name": "com.unity.inputsystem", "expression": "1.0.0", "define": "CARSALES_INPUTSYSTEM" },
+        { "name": "com.unity.ai.navigation", "expression": "1.0.0", "define": "CARSALES_AINAV" },
+        { "name": "com.unity.ugui", "expression": "1.0.0", "define": "CARSALES_UGUI" }
+    ],
+    "noEngineReferences": false
+}

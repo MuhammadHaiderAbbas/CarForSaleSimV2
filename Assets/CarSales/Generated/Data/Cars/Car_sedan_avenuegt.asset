@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 34f1338a8d4783249bc2e94856844be0, type: 3}
+  m_Name: Car_sedan_avenuegt
+  m_EditorClassIdentifier: CarSales.Runtime::CarSales.CarDefinition
+  carId: sedan_avenuegt
+  displayName: Avenue GT
+  brand: Orion
+  category: 1
+  year: 2020
+  basePrice: 26000
+  popularity: 1.1
+  displayPrefab: {fileID: 920711257054145165, guid: 8a23ae76a4beab549a98e2289f3354e5, type: 3}
+  thumbnail: {fileID: 0}
+  fuelType: Petrol
+  transmission: Automatic
+  description: The sporty version of the Avenue. Popular with young professionals.
+  physicsOverride: {fileID: 11400000, guid: 56258cbf8e0f51847989b5f1c9eb1476, type: 2}

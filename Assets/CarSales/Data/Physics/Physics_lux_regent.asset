@@ -1,0 +1,69 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 57cd2cb3d0e0e2b4d9bd687580eea2dd, type: 3}
+  m_Name: Physics_lux_regent
+  m_EditorClassIdentifier: CarSales.Runtime::CarSales.VehiclePhysicsProfileAsset
+  profile:
+    name: Regent
+    vehicleClass: 8
+    powertrain: 2
+    drivetrain: 1
+    engine:
+      idleRpm: 700
+      redlineRpm: 6300
+      peakTorqueNm: 598
+      peakTorqueRpm: 1100
+      plateauEndRpm: 4500
+      engineBrakeNm: 83.2
+    gearbox:
+      ratios:
+      - 4.7
+      - 3.1
+      - 2.1
+      - 1.67
+      - 1.29
+      - 1
+      - 0.84
+      - 0.67
+      reverseRatio: 4.4649997
+      finalDrive: 2.8
+      upshiftRpm: 5900
+      downshiftRpm: 1700
+      shiftTime: 0.25
+      efficiency: 0.9
+    electric:
+      maxTorqueNm: 300
+      maxPowerKw: 150
+      maxRpm: 12000
+      ratio: 9
+      regenFraction: 0.25
+      efficiency: 0.92
+    chassis:
+      massKg: 1900
+      centerOfMassHeight: 0.48
+      wheelRadius: 0.35
+      suspensionDistance: 0.2
+      springScale: 1
+      damperScale: 1
+      forwardGrip: 1
+      sidewaysGrip: 1.05
+      maxSteerAngle: 34
+      highSpeedSteerFactor: 0.35
+      antiRollForce: 6000
+      brakeStrength: 1
+      frontBrakeBias: 0.65
+      handbrakeTorque: 2500
+      dragArea: 0.7
+      rollingResistance: 0.013
+      downforce: 1.2
+      topSpeedLimitKmh: 250
+    energyPercentPerKm: 2.8

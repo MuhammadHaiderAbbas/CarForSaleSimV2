@@ -70,7 +70,12 @@
 
 `CarState` flow: `InTransit → NeedsRepair / Ready → Listed → Sold`.
 
-Save file: `Application.persistentDataPath/carsales_save.json` (**Tools → Car Sales → Show Save Folder**).
+Saves (v5): `Application.persistentDataPath/saves/slot_1..3/save.json` plus `save.json.bak1..3`
+(**Tools → Car Sales → Show Save Folder**). The file is an envelope (`Foundation/Save/SaveEnvelope.cs`) with a checksum
+and one JSON block per system: `game` (the `SaveData` above) and `ledger` (every money movement). Writes are atomic
+(temp file, then replace) and loading falls back to the newest valid backup. A v4 `carsales_save.json` is moved into
+the first free slot automatically. Money must go through `EconomyManager.AddMoney/TrySpend/ForceSpend` with a
+`TxCategory`, so it appears in the bank statement and reports.
 
 ## 5. Economy formulas
 All in `Scripts/Systems/CarValueCalculator.cs`. Balance the game by changing these numbers.
@@ -336,3 +341,145 @@ Dealership (daily rent; links to a `DealershipManager` by `propertyId`), Investm
 5 lots per day, 10:00–17:00. Starting bid = 35% of the claimed value. 2–4 AI bidders with secret maximums
 (50–102% of the TRUE value). The 12 s timer resets to 6 s after every bid; you win if you're highest when it hits zero.
 Won cars appear in the auction car park — drive or tow them home.
+
+## 13. v5 vehicle framework (Phase 2)
+- **Assemblies:** `CarSales.Foundation` (events, ledger, saves) ← `CarSales.Sim` (vehicle simulation, no Unity code)
+  ← `CarSales.Runtime` (MonoBehaviours, UI). Logic in Foundation/Sim is covered by EditMode tests.
+- **Driving:** `TestDriveManager.StartDrive` builds a driving object from the car's model. In Realistic mode it adds
+  `WheelVehicleController.Setup(...)`: a Rigidbody, a box collider from the body, and a WheelCollider per wheel mesh
+  (names containing wheel/tyre/tire; invisible wheels at the body corners if there are none). Each FixedUpdate:
+  `DriveInput.Map` (W/S → throttle, brake, reverse) → `Powertrain.Step` (engine + gearbox → wheel torque) →
+  TCS/ABS/ESC per wheel → steering limit → anti-roll bars → downforce. Arcade mode (or a failed setup) uses
+  `ArcadeCarController`. Both implement `IVehicleDriver`.
+- **Profiles:** `VehicleProfileResolver.For(CarDefinition)` → the definition's `physicsOverride` asset, else the preset
+  `VehicleProfiles.For(class, powertrain)`. Class comes from the category (and price for hatchbacks/sedans),
+  powertrain from `fuelType`. Tune with Vehicle Studio; profile assets live in `Assets/CarSales/Data/Physics/`.
+- **Components:** `CarInstance.components` (list of `ComponentState {id, health}`) is the truth; `CarInstance.parts[6]`
+  and `condition` are caches maintained by `CarParts` — always change condition through `CarParts`
+  (`Set`, `Damage(car, zone, amount)`, `Wear`, `RepairAll`). `CarParts.Effects(car)` gives the `DrivingEffects`
+  the physics uses. Component ids are saved as numbers: only add new ones (`ComponentCatalog`).
+- **Dents:** `DentModel.ZoneDepths(components)` → depth per zone from the body panels; `CarDamageVisual.Apply(model, car)`
+  copies the meshes (never the shared ones) and moves vertices near the damaged end/side. Called by `CarDisplay.Refresh`
+  and when driving. Only meshes with Read/Write enabled can be dented.
+- **Manual gearbox:** `GameSettings.ManualGearbox` → `Powertrain.Manual`; `WheelVehicleController` reads the `GearUp`/`GearDown`
+  actions and calls `Powertrain.ShiftUp/ShiftDown`; `DriveInput.MapManual` makes W = throttle and S = brake.
+- **Test track:** `CarSalesTestTrack.cs` (editor) builds the scene; `TestTrackController` (runtime) spawns cars on its own
+  (sets `CarSalesServices.Database`, no other services) and measures performance.
+
+## 14. Asset Studio (Phase 3)
+- **Assemblies:** `CarSales.Studio.Core` (engine-free: licences, credits, scale/texture/validation heuristics, tested),
+  `CarSales.Studio.Editor` (window, pipeline, build hooks). Wheel detection is in `CarSales.Sim.WheelDetection`
+  and used by both the Studio and `WheelVehicleController`.
+- **Folders:** `Assets/CarSales/Art/<Category>/<Name>/Source` (original files), `.../Materials` (extracted materials),
+  `.../<Name>.prefab` (game-ready), `.../History` (previous versions); `Assets/CarSales/Data/Cars` (imported car
+  definitions); `Assets/CarSales/Library/Resources/CarSalesAssetRegistry.asset` (records + licences).
+- **Prefab layout:** root (name) → `Model` (the original model, scaled/turned/centred on the ground). Cars: `VehicleRig`
+  (4 wheel transforms) and `CarVisual` (paint renderers + material slots) on the root; the game builds the physics
+  around it at runtime.
+- **Licences:** `LicencePolicy.Check` decides; `LicenceBuildCheck` (IPreprocessBuildWithReport) fails release builds with
+  blocked assets and writes `CREDITS.txt` after each build.
+
+## 15. UI design system (Phase 4)
+- **Colours:** always `UIFactory.<Token>` (e.g. `UIFactory.CardBg`, `UIFactory.Good`, `UIFactory.HudBg`). They read
+  `UITheme.Current` (`Scripts/UI/Framework/UITheme.cs`). To add a colour, add a field to `UIPalette`, give it a value
+  in `Dark()` (Light/High contrast inherit it), and expose it in UIFactory. `UiLintTests` fails on literal colours.
+- **Buttons:** `UIFactory.Btn` picks the label colour with `ContrastText`; `SetButtonColor` keeps it readable.
+- **Windows:** `UIManager.Open` plays `UITransition` (fade + scale, unscaled time) and focuses the first button for gamepads.
+- **Scale:** `GameSettings.UiScale` → CanvasScaler reference resolution (`GameSettings.UiReferenceResolution`).
+- **Post-processing:** `CarSalesLooks.cs` (editor, compiled when URP is installed: `CARSALES_URP`).
+- **Components:** `Scripts/UI/Framework/UIComponents.cs` — `UIFactory.Tabs`, `MakeTable` (rows = strings + sort keys),
+  `Modal`/`Confirm`, `StatTile`, `Chart`, `Badge`, `EmptyState`. Build new screens from these.
+- **Back:** `UIManager.Open` remembers the previous screen; `Back()` (Esc / B) asks the screen first (`IBackHandler`),
+  then returns to the previous one. `Close()` / `CloseAll()` clears the history.
+- **Computer:** `ComputerHubUI` = desktop + one app window; add an app with `AddPage<T>` and a `Tile(...)`.
+- **Vehicle file:** `VehicleDetailsUI.Show(listing)`, `ShowPhysical(display)`, `ShowOwned(car)`; tabs are rebuilt on change.
+- **Placeholders:** the wizard wraps replaceable primitives in `PlaceholderSlot` groups (`Slot(...)` in
+  `CarSalesWorldBuilder.cs`); `Editor/CarSalesPlaceholders.cs` fits the chosen prefabs (`Data/PlaceholderReplacements.asset`).
+- **Save thumbnails:** `SaveThumbnail.Capture(Camera.main, store.ThumbnailFile(slot))` after each save.
+
+## 16. Inspection, faults, documents, workshop (Phase 5)
+- **Data per car** (`CarInstance`): `identity`, `documents`, `history`, `faults`, `knowledge`. `CarRecords.Ensure` fills
+  them once (seeded from the car's id) and is called from `CarParts.EnsureParts`/`Randomize`, so old saves upgrade themselves.
+- **Rules** live in `Sim/` (engine-free, tested): `FaultCatalog`/`FaultModel`, `InspectionEngine`, `MotTest`,
+  `VehicleRecords` (VIN, plate, generation, value multiplier), `WorkshopCatalog` (parts, jobs, prices, results).
+- **Knowledge, not truth:** a fault's `known` flag; `history.checkedHistory`. `MarketValue(car, useReported: true)`
+  only counts known problems. The UI lists only known faults.
+- **WorkshopManager** (added by `CarSalesBootstrap` if missing): inspections, orders, garage jobs (advance with
+  `DayCycle.OnTimeChanged`), DIY, MOT, paperwork, nightly fault progression, deliveries, repossession. Saved as module `workshop`.
+- **Money:** new ledger categories Parts, Labour, Paperwork, Finance settlements.
+- **Phase 5b:** `WorkStation` (bay box + console, `StationType`), `HandsOnSession`/`HandsOnSocket` (markers, hold E;
+  steps from `Sim/Workshop/Board.cs`: `HandsOn`, `HandsOnInspection`), board cards and the mechanic in `WorkshopState`
+  (`board`, `mechanicHired`; worked in `WorkshopManager.MechanicWork`), `PartsCounter` (sets `WorkshopManager.AtCounter`),
+  world sites in `Editor/CarSalesServiceCentre.cs`.
+
+## 17. Auctions (Phase 6)
+- **Rules** (`Sim/Auction/AuctionEngine.cs`, tested): `AuctionRules` (fees, VAT, invoices, late fees, storage, reports,
+  `GenerateBidders`, `MaxBid` (§8.3), `ResolveProxy`, `LiveAiBid`, `SoftClose`, `Hammer`, `SellerAcceptChance`).
+- **AuctionManager** (runtime): `AuctionState` (save module `auction`); calendar (`EnsureSchedule`), lot cars generated
+  and shaped per sale type, AI interest per lot (seeded), online lots updated twice a second, hall sales run live when
+  `AuctionManager.PlayerInHall()` else instantly, invoices/payment/collection, nightly late fees and storage.
+- **World:** `AuctionHall` (box, stage, screen), `AuctionYard` (bays; rebuilt when the yard lots change),
+  `CarDisplay.InitializeForAuction` (lot number tag; E opens the lot). Overlay: `AuctionHallHUD`. Terminal: `AuctionUI`.
+
+## 18. Market, customers, staff (Phase 7a)
+- **Rules** (tested, `Sim/`): `MarketModel` (index, seasons, demand, supply, competitors, batches), `Buyers` (personas,
+  `Score`, `MaxPrice`, `OpeningOffer`, trade-in, finance, reviews, fault spotting), `StaffRules` (wages, candidates,
+  salesperson deal, mechanic speed, detailing, morale).
+- **Runtime:** `MarketManager` (multiplier used by `CarValueCalculator`), `CrmManager` (records, reviews, complaints),
+  `StaffManager` (team, wages on `WeekEnded`, detailers/drivers on the clock, salespeople via `CustomerAI`),
+  `CustomerDeal` (quote + finishing a sale, shared by `NegotiationSession` and salespeople).
+- All three managers are added by `CarSalesBootstrap` if missing and saved as modules `market`, `crm`, `staff`.
+- **Phase 7b:** `Sim/Customers/Sourcing.cs` (`PrivateSellers`, `Listings`, `BuyerQuestions`, `AfterSale`), `SourcingManager`
+  (ads + viewings at `SellerSpot`s with a `SellerNpc`, leads, warranties; module `sourcing`), `PrivateSellerUI`,
+  `ListingEditorUI` (`CarInstance.listing`), `HandoverUI` (between the agreed price and `CustomerDeal.CompleteSale`),
+  `NegotiationSession.Answer` / `TestDrive`, `CustomerAI.InspectAround`.
+
+## 19. World (Phase 8a)
+- **Rules** (tested): `Sim/World/WorldSim.cs` (weather Markov chain, grip/footfall/light/fog, bank holidays, Sunday hours,
+  fuel walk, events), `TrafficRules` (gap keeping, lights, density), `Sim/World/RoadGraph.cs` (lanes from segments).
+- **WorldManager** (module `world`): weather effects (`Grip` used by `WheelVehicleController`, `Footfall` by
+  `CustomerSpawner`, `SunFactor` by `DayNightLighting`, `FuelIndex` by `VehicleRegistry`), events, open day.
+- **TrafficSystem / TrafficCar / TrafficLight / PedestrianSystem**: added by `CarSalesBootstrap` if missing; read the
+  town's `RoadNetwork` (falls back to `RoadGraph.DefaultTown()`).
+- **World Builder:** `Editor/CarSalesWorldBuilderTool.cs` (`AddSiteToTown`, `BuildUserSite` → `BuildDealershipSite`
+  with an optional imported building, `ValidateSite`), runtime `Site` (registers a buyable property) and `WorldLayout`.
+- **Phase 8b:** `RoadEditing` (snap, split, scatter; tested), `WorldLayout.userRoads` + `Network()`, `BuildUserRoads` /
+  `ApplyRoadsToTown` and the Scene-view drawing in `WorldBuilderWindow`, `SiteTemplate` builders in `BuildUserSite`,
+  `PerformanceGovernor` (density scale + overlay), `GameSettings.TrafficLevel/ShowPerformance`.
+
+## 20. Business (Phase 9)
+- **Rules** (tested): `Sim/Business/Business.cs` (`BusinessRules`: margin VAT, returns, fines, credit rating, overdraft,
+  insurance premiums/excess/payouts, security, utilities, rates, campaigns, diminishing returns, levels, development,
+  analytics; `SaleRecord`, `VatReturn`).
+- **BusinessManager** (module `business`): records every sale (`VehicleRegistry.RemoveSoldCar`; who bought via
+  `SetSaleContext`), VAT returns on `QuarterEnded`, daily overdraft interest/utilities/marketing/VAT fines, weekly
+  rates/insurance/security, claims (from `WorldManager` thefts and vandalism), levels, developments.
+- **Hooks:** `EconomyManager.CanAfford` includes the overdraft; `ProgressManager` counts debt past the overdraft;
+  `CustomerSpawner` (footfall, campaign personas, luxury gating), `SourcingManager` (leads), `StaffManager` (staff slots),
+  `PropertyManager.IncomeOf` (developments).
+
+## 21. Production readiness (Phase 10)
+- **Settings** (`UI/SettingsUI.cs`): tabs General / Display / Audio / Driving / Controls. New `GameSettings`:
+  `Subtitles`, `Language`, `GroupVolume(g)` / `SetGroupVolume`, `Difficulty` (0-4), theme 0-4 (`UIThemeChoice.ColourBlind`).
+- **Rebinding:** `CarSalesInput.Asset` (the linked .inputactions, found from any resolved action), `Collection`,
+  `AllActions()`, `SaveOverrides/LoadOverrides/ResetOverrides` (PlayerPrefs `CarSales.BindingOverrides`). Actions asked for
+  by name (`Resolve(null, "Interact")`) are looked up in the asset first, so a rebind applies everywhere; the built-in
+  fallback actions live in one map so they can be rebound too.
+- **Strings:** `Foundation/Localization/Strings` (engine-free, tested) and `Core/Loc` (`T(key, english)`, `F(...)`,
+  `Reload()`, `Available()`), table `Resources/Localization/<lang>.json`. Missing keys fall back to English, then to the
+  text in code. `Phase10Tests.EnglishTable_HasEveryKeyTheGameUses_NoDuplicates` scans `Scripts/` for `Loc.T("key", "...")`.
+- **Subtitles:** `UI/Subtitles.Say(speaker, text)`; called from `AuctionManager.LiveMessage` (player in the hall) and
+  `CustomerAI.SetBubble` (camera within 12 m).
+- **Audio:** `AudioManager.GroupOf(sfx)`, `ApplyGroupVolumes()`; `EngineAudio` uses the vehicles group;
+  `AudioLibrary` (ScriptableObject in Resources, replaceable clips); `AmbienceManager` (added by `CarSalesBootstrap`)
+  picks a zone every 0.5 s (`AuctionHall.Contains`, near a `WorkStation` / workshop `ServiceZone`, near a dealership,
+  else street), crossfades two looping sources, adds rain from `WorldManager.Weather`.
+- **Balance:** `Sim/Balance/Balance.cs` (`BalanceConfig` presets + JSON, `Sandbox.Run/Average`, `SandboxResult`);
+  `Core/BalanceSettings` (resolve preset or `Resources/CarSalesBalance.json`); stored per save in
+  `BusinessState.difficulty/balanceJson`. Used by `EconomyManager.ResetToStart` (starting money), `CustomerSpawner`
+  (budgets, footfall) and `WorkshopManager.PartPrice/LabourCost` (repairs). Editor: `SimulationConfiguratorWindow`.
+- **Credits:** `UI/CreditsUI` (`Text()` = game credits + `AssetRegistry.CreditsText`, `Show(parent, onClose)`).
+- **Build:** `Editor/CarSalesBuild.cs` (`BuildWindowsRelease/Development`, CREDITS.txt, build_info.txt). The Asset Studio
+  licence check still runs before every build.
+- **Tests:** `Tests/PlayMode/GameFlowTests.cs` (needs the built scene; uses `SaveManager.SavesRootOverride`), and the
+  save-migration matrix + balance + strings tests in `Tests/EditMode/Phase10Tests.cs`.

@@ -2,6 +2,9 @@
     "name": "CarSales.Runtime",
     "rootNamespace": "CarSales",
     "references": [
+        "CarSales.Foundation",
+        "CarSales.Sim",
+        "CarSales.Studio.Core",
         "Unity.InputSystem",
         "Unity.TextMeshPro",
         "UnityEngine.UI",

@@ -1,5 +1,7 @@
-using System.Collections;
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using CarSales.Sim;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -7,220 +9,420 @@ using UnityEngine.UI;
 namespace CarSales
 {
     /// <summary>
-    /// Live car auction against AI bidders. Condition is only the seller's claim - auctions are cheap but risky.
-    /// The bid timer resets whenever someone bids; when it runs out the highest bidder wins.
+    /// Auction terminal (desk, computer, phone): Calendar, Catalogue (lots with condition reports, max bids, watch),
+    /// My bids, Invoices (pay, collection) and Accounts (register, buyer numbers, deposits). Live hall bidding is
+    /// done in the hall itself (see AuctionHallHUD).
     /// </summary>
     public class AuctionUI : UIPanel
     {
-        class Bidder { public string name; public int max; }
-        static readonly string[] Names = { "Dealer Dan", "Mrs. Patel", "Big Mike", "Collector Joe", "Kenji", "Rosa", "TradeCars Ltd", "Vlad" };
+        static readonly string[] Views = { "Calendar", "Catalogue", "My bids", "Invoices", "Accounts" };
+        UIFactory.TabBar tabs, eventTabs;
+        RectTransform calendarView, catalogueView, bidsView, invoicesView, accountsView;
+        RectTransform calendarList, bidsList, invoicesList, accountsList, lotList, detail;
+        UIFactory.Table bidsTable;
+        readonly List<AuctionEvent> catalogueEvents = new List<AuctionEvent>();
+        string selectedEvent, selectedLot;
+        CarDisplay selectedDisplay;
+        TMP_InputField maxInput;
+        float refreshTimer;
 
-        RawImage photo;
-        TextMeshProUGUI lotText, carText, specText, bidText, leaderText, logText, timerText;
-        UIFactory.Bar timerBar;
-        Button bidSmall, bidMed, bidLarge, passButton;
-        readonly List<Bidder> bidders = new List<Bidder>();
-
-        CarInstance lot;
-        int lotNumber, totalLots, currentBid;
-        string leader = "";
-        float timer, aiTimer;
-        bool running;
-        const float LotTime = 12f, ResetTime = 6f;
+        static AuctionManager A => CarSalesServices.Auction;
 
         public override void Build()
         {
-            var body = UIFactory.Window(Root, "Car Auction", new Vector2(1280f, 780f), CloseAll);
-            UIFactory.Horizontal(body, 0, 26f, TextAnchor.UpperLeft).childForceExpandHeight = true;
+            var body = UIFactory.Window(Root, "Auctions", new Vector2(1560f, 900f), CloseAll);
+            UIFactory.Vertical(body, 0, 10f);
+            tabs = UIFactory.Tabs(body, Views, _ => Refresh(), 42f, 180f, 16f);
+            var host = UIFactory.Rect("Views", body);
+            UIFactory.LE(host, flexH: 1, flexW: 1);
 
-            var left = UIFactory.VCol(body, 8f, "Left", 580f);
-            lotText = UIFactory.Text(left, "", 18, UIFactory.Accent, TextAlignmentOptions.Left, true);
-            photo = UIFactory.CarPicture(left, 330f);
-            carText = UIFactory.Text(left, "", 26, UIFactory.TextMain, TextAlignmentOptions.Left, true);
-            specText = UIFactory.Text(left, "", 17, UIFactory.TextDim, TextAlignmentOptions.Left);
-            UIFactory.Spacer(left);
+            calendarView = View(host, "Calendar");
+            UIFactory.Vertical(calendarView, 0, 8f);
+            calendarList = UIFactory.ScrollList(calendarView, 8f);
 
-            var right = UIFactory.VCol(body, 8f, "Right");
-            UIFactory.Text(right, "CURRENT BID", 15, UIFactory.TextDim, TextAlignmentOptions.Left, true);
-            bidText = UIFactory.Text(right, "$0", 56, UIFactory.Gold, TextAlignmentOptions.Left, true);
-            UIFactory.LE(bidText, h: 70);
-            leaderText = UIFactory.Text(right, "", 20, UIFactory.TextMain, TextAlignmentOptions.Left, true);
-            timerText = UIFactory.Text(right, "", 16, UIFactory.TextDim, TextAlignmentOptions.Left);
-            timerBar = UIFactory.ProgressBar(right, UIFactory.Good, 14f);
-            var logBg = UIFactory.Panel(right, "Log", new Color(0f, 0f, 0f, 0.25f), 1.6f);
-            UIFactory.LE(logBg, flexH: 1);
-            UIFactory.Vertical(logBg, 10, 0f);
-            var logContent = UIFactory.ScrollList(logBg.transform, 2f, "LogScroll");
-            logText = UIFactory.Text(logContent, "", 16, UIFactory.TextMain, TextAlignmentOptions.TopLeft);
+            catalogueView = View(host, "Catalogue");
+            UIFactory.Vertical(catalogueView, 0, 8f);
+            var evRow = UIFactory.Rect("EventRow", catalogueView);
+            UIFactory.LE(evRow, h: 40);
+            UIFactory.Vertical(evRow, 0, 0f);
+            eventTabsHost = evRow;
+            var split = UIFactory.Rect("Split", catalogueView);
+            UIFactory.LE(split, flexH: 1, flexW: 1);
+            UIFactory.Horizontal(split, 0, 16f, TextAnchor.UpperLeft).childForceExpandHeight = true;
+            var left = UIFactory.VCol(split, 6f, "Lots", 560f);
+            lotList = UIFactory.ScrollList(left, 6f, "LotList");
+            var right = UIFactory.Panel(split, "Detail", UIFactory.CardBg, 1.4f);
+            UIFactory.LE(right, flexW: 1, flexH: 1);
+            UIFactory.Vertical(right, 16, 6f);
+            detail = UIFactory.ScrollList(right.transform, 6f, "DetailScroll");
 
-            var row = UIFactory.HRow(right, 58, 10);
-            bidSmall = UIFactory.Btn(row, "Bid +$250", UIFactory.Good, () => PlayerBid(250), 56f, 18f);
-            bidMed = UIFactory.Btn(row, "Bid +$1,000", UIFactory.Good, () => PlayerBid(1000), 56f, 18f);
-            bidLarge = UIFactory.Btn(row, "Bid +$5,000", UIFactory.Good, () => PlayerBid(5000), 56f, 18f);
-            var row2 = UIFactory.HRow(right, 48, 10);
-            passButton = UIFactory.Btn(row2, "Skip this lot", UIFactory.Neutral, Pass, 46f, 17f);
-            UIFactory.Btn(row2, "Leave auction", UIFactory.Bad, CloseAll, 46f, 17f);
+            bidsView = View(host, "Bids");
+            UIFactory.Vertical(bidsView, 0, 4f);
+            bidsTable = UIFactory.MakeTable(bidsView, new List<UIFactory.TableColumn>
+            {
+                new UIFactory.TableColumn("Lot", 80f), new UIFactory.TableColumn("Car"), new UIFactory.TableColumn("Sale", 260f),
+                new UIFactory.TableColumn("Current", 130f, TextAlignmentOptions.Right), new UIFactory.TableColumn("Your max", 130f, TextAlignmentOptions.Right),
+                new UIFactory.TableColumn("Status", 200f),
+            }, 40f);
+            bidsTable.SetEmptyText("No bids or watched lots. Open the Catalogue.");
+
+            invoicesView = View(host, "Invoices");
+            UIFactory.Vertical(invoicesView, 0, 8f);
+            invoicesList = UIFactory.ScrollList(invoicesView, 8f);
+
+            accountsView = View(host, "Accounts");
+            UIFactory.Vertical(accountsView, 0, 8f);
+            accountsList = UIFactory.ScrollList(accountsView, 8f);
+            tabs.Select(0, false);
         }
 
+        RectTransform eventTabsHost;
+
+        static RectTransform View(Transform host, string name)
+        {
+            var v = UIFactory.Rect(name, host);
+            UIFactory.Stretch(v);
+            return v;
+        }
+
+        // ------------------------------------------------------------------ OPENING
         public void Show()
         {
-            var a = CarSalesServices.Auction;
-            if (!a) { CarSalesServices.UI.Error("There's no auction house here."); return; }
-            if (!a.IsOpen) { CarSalesServices.UI.Error($"Auctions run {a.OpenHour:00}:00 - {a.CloseHour:00}:00. Come back later!"); return; }
-            if (a.Lots.Count == 0) { CarSalesServices.UI.Notify("No more lots today. New cars arrive tomorrow."); return; }
+            if (!A) { CarSalesServices.UI.Error("There are no auctions in this town."); return; }
             OpenSelf();
-            totalLots = a.Lots.Count;
-            lotNumber = 0;
-            StartLot();
+            Refresh();
         }
 
-        void StartLot()
+        /// <summary>Opens a lot (from the yard car, or the catalogue).</summary>
+        public void ShowLot(string lotId, CarDisplay display = null)
         {
-            var a = CarSalesServices.Auction;
-            if (a.Lots.Count == 0 || !a.IsOpen) { Finish(); return; }
-            lot = a.Lots[0];
-            lotNumber++;
-            var def = CarSalesServices.Database.Get(lot.carId);
-            currentBid = a.StartingBid(lot);
-            leader = "";
-            timer = LotTime;
-            aiTimer = Random.Range(1f, 2.5f);
-            running = true;
-            logText.text = "";
-
-            bidders.Clear();
-            int trueValue = CarValueCalculator.MarketValue(lot);
-            int count = Random.Range(2, 5);
-            for (int i = 0; i < count; i++)
-                bidders.Add(new Bidder { name = Names[Random.Range(0, Names.Length)], max = Mathf.RoundToInt(trueValue * Random.Range(0.5f, 1.02f)) });
-
-            UIFactory.SetCarPicture(photo, lot);
-            lotText.text = $"LOT {lotNumber} OF {totalLots}";
-            carText.text = $"{def.year} {def.brand} {def.displayName}";
-            int est = CarValueCalculator.MarketValue(lot, useReported: true);
-            specText.text = $"{lot.mileage:N0} km   |   {def.fuelType}   |   {def.transmission}\n" +
-                            $"Condition: <color={UIFactory.Hex(UIFactory.Warn)}>~{lot.reportedCondition:0}% (seller's claim, no inspection!)</color>\n" +
-                            $"Cleanliness {lot.cleanliness:0}%   |   Fuel {lot.fuel:0}%\n" +
-                            $"Estimated value if the claim is true: <b>{UIFactory.Money(est)}</b>\n" +
-                            $"Starting bid: {UIFactory.Money(currentBid)}";
-            Log($"<color={UIFactory.Hex(UIFactory.Accent)}>Lot {lotNumber} opens at {UIFactory.Money(currentBid)}.</color>");
-            UpdateLabels();
+            if (!A) return;
+            var lot = A.Lot(lotId);
+            if (lot == null) return;
+            selectedLot = lotId;
+            selectedEvent = lot.eventId;
+            selectedDisplay = display;
+            OpenSelf();
+            tabs.Select(1, false);
+            Refresh();
         }
 
-        int Increment => currentBid < 10000 ? 250 : currentBid < 30000 ? 500 : 1000;
-
-        void PlayerBid(int raise)
-        {
-            if (!running) return;
-            int bid = leader == "" ? currentBid : currentBid + raise;
-            if (leader == "You") { CarSalesServices.UI.Notify("You're already the highest bidder."); return; }
-            if (!CarSalesServices.Economy.CanAfford(bid)) { CarSalesServices.UI.Error("You can't afford that bid."); return; }
-            currentBid = bid;
-            leader = "You";
-            timer = Mathf.Max(timer, ResetTime);
-            Log($"<b>You</b> bid {UIFactory.Money(bid)}");
-            CarSalesServices.PlaySfx(Sfx.Click);
-            UpdateLabels();
-        }
+        void OnEnable() { if (A) A.OnChanged += MarkDirty; }
+        void OnDisable() { if (A) A.OnChanged -= MarkDirty; }
+        bool dirty;
+        void MarkDirty() => dirty = true;
 
         void Update()
         {
-            if (!running) return;
-            timer -= Time.unscaledDeltaTime;
-            aiTimer -= Time.unscaledDeltaTime;
-            if (aiTimer <= 0f)
+            refreshTimer -= Time.unscaledDeltaTime;
+            if (!dirty || refreshTimer > 0f) return;
+            refreshTimer = 0.5f;
+            dirty = false;
+            // Don't rebuild while the player is typing a bid.
+            if (maxInput && maxInput.isFocused) return;
+            Refresh();
+        }
+
+        void Refresh()
+        {
+            if (!A || tabs == null) return;
+            calendarView.gameObject.SetActive(tabs.Index == 0);
+            catalogueView.gameObject.SetActive(tabs.Index == 1);
+            bidsView.gameObject.SetActive(tabs.Index == 2);
+            invoicesView.gameObject.SetActive(tabs.Index == 3);
+            accountsView.gameObject.SetActive(tabs.Index == 4);
+            int open = A.Invoices.Count(i => !i.paid && !i.cancelled);
+            tabs.SetLabel(3, open > 0 ? $"Invoices ({open})" : "Invoices");
+            switch (tabs.Index)
             {
-                aiTimer = Random.Range(0.8f, 2f);
-                int next = leader == "" ? currentBid : currentBid + Increment;
-                var interested = bidders.FindAll(b => b.name != leader && b.max >= next);
-                if (interested.Count > 0 && Random.value < 0.75f)
+                case 1: RenderCatalogue(); break;
+                case 2: RenderBids(); break;
+                case 3: RenderInvoices(); break;
+                case 4: RenderAccounts(); break;
+                default: RenderCalendar(); break;
+            }
+        }
+
+        static string When(AuctionEvent e)
+        {
+            int d = e.day - CarRecords.Today;
+            string day = d == 0 ? "Today" : d == 1 ? "Tomorrow" : $"{CarSales.Foundation.GameCalendar.WeekdayShort(e.day)} (day {e.day})";
+            return e.online ? $"{day}, online, lots close 14:00-20:00" : $"{day} {e.startHour:00}:00 at the hall";
+        }
+
+        // ------------------------------------------------------------------ CALENDAR
+        void RenderCalendar()
+        {
+            UIFactory.ClearChildren(calendarList);
+            foreach (var e in A.Events.Where(x => !x.finished).OrderBy(x => x.day).ThenBy(x => x.startHour))
+            {
+                var venue = AuctionRules.Venue(e.venueId);
+                var row = UIFactory.Panel(calendarList, e.id, UIFactory.CardBg, 1.8f);
+                UIFactory.LE(row, h: 74);
+                var h = UIFactory.Horizontal(row, 10, 12f);
+                h.padding = new RectOffset(16, 12, 8, 8);
+                h.childForceExpandHeight = false;
+                UIFactory.Icon(row.transform, e.Type == AuctionType.Salvage ? UIFactory.Bad : e.online ? UIFactory.Info : UIFactory.Gold, e.online ? "@" : "A", 40f);
+                var col = UIFactory.VCol(row.transform, 2f);
+                UIFactory.Text(col, $"<b>{AuctionRules.TypeName(e.Type)}</b>  -  {venue.Name}", 18, UIFactory.TextMain, TextAlignmentOptions.Left);
+                UIFactory.Text(col, $"{When(e)}  -  {(e.lots.Count > 0 ? $"{e.lots.Count} lots" : "catalogue not out yet")}" +
+                                    (venue.GuaranteesTitle ? "" : $"   <color={UIFactory.Hex(UIFactory.Warn)}>No title guarantee</color>"), 14, UIFactory.TextDim, TextAlignmentOptions.Left);
+                var ev = e;
+                var b = UIFactory.Btn(row.transform, "Catalogue", UIFactory.Accent, () => { selectedEvent = ev.id; selectedLot = null; tabs.Select(1, false); Refresh(); }, 42f, 15f);
+                UIFactory.LE(b, h: 42, w: 140, flexW: 0);
+                b.interactable = e.lots.Count > 0;
+            }
+            if (calendarList.childCount == 0) UIFactory.EmptyState(calendarList, "No sales planned", null);
+        }
+
+        // ------------------------------------------------------------------ CATALOGUE
+        void RenderCatalogue()
+        {
+            catalogueEvents.Clear();
+            catalogueEvents.AddRange(A.Events.Where(e => !e.finished && e.lots.Count > 0).OrderBy(e => e.day).ThenBy(e => e.startHour).Take(6));
+            if (selectedEvent == null || !catalogueEvents.Exists(e => e.id == selectedEvent)) selectedEvent = catalogueEvents.FirstOrDefault()?.id;
+            UIFactory.ClearChildren(eventTabsHost);
+            eventTabs = UIFactory.Tabs(eventTabsHost, catalogueEvents.Select(e => $"{(e.day == CarRecords.Today ? "Today" : "Day " + e.day)} {AuctionRules.TypeName(e.Type).Replace(" sale", "")}").ToArray(),
+                                       i => { selectedEvent = catalogueEvents[i].id; selectedLot = null; Refresh(); }, 38f, 0f, 13f);
+            int idx = catalogueEvents.FindIndex(e => e.id == selectedEvent);
+            if (idx >= 0) eventTabs.Select(idx, false);
+
+            UIFactory.ClearChildren(lotList);
+            var ev = catalogueEvents.Find(e => e.id == selectedEvent);
+            if (ev == null) { UIFactory.EmptyState(lotList, "No catalogues out", "Catalogues appear two days before each sale."); UIFactory.ClearChildren(detail); return; }
+            foreach (var lot in A.LotsOf(ev).OrderBy(l => l.lotNo)) LotRow(lot, ev);
+            if (selectedLot == null) selectedLot = A.LotsOf(ev).FirstOrDefault()?.id;
+            RenderDetail();
+        }
+
+        void LotRow(AuctionLot lot, AuctionEvent ev)
+        {
+            var car = A.CarOf(lot);
+            string name = car != null ? car.Name : "(sold)";
+            string price = lot.Status == LotStatus.Sold || lot.Status == LotStatus.Provisional ? $"{StatusText(lot)} {UIFactory.Money(lot.hammer)}"
+                         : string.IsNullOrEmpty(lot.leader) ? $"guide {UIFactory.Money(lot.estimate)}" : $"{UIFactory.Money(lot.currentBid)} ({A.BidderName(lot.leader)})";
+            var l = lot;
+            var b = UIFactory.Btn(lotList, $"<b>Lot {lot.lotNo}</b>  {name}  <size=80%>grade {lot.report.grade}</size>\n<size=80%>{price}{(lot.playerMax > 0 ? $"   your max {UIFactory.Money(lot.playerMax)}" : "")}{(lot.watched ? "   [watching]" : "")}</size>",
+                                  lot.id == selectedLot ? UIFactory.Accent : UIFactory.CardLight, () => { selectedLot = l.id; selectedDisplay = null; Refresh(); }, out var label, 56f, 15f);
+            label.alignment = TextAlignmentOptions.MidlineLeft;
+            label.margin = new Vector4(12f, 0f, 8f, 0f);
+        }
+
+        static string StatusText(AuctionLot l)
+        {
+            switch (l.Status)
+            {
+                case LotStatus.Live: return "LIVE";
+                case LotStatus.Sold: return l.buyer == AuctionRules.PlayerId ? "WON" : "Sold";
+                case LotStatus.Provisional: return "Provisional";
+                case LotStatus.Unsold: return "Unsold";
+                case LotStatus.Withdrawn: return "Withdrawn";
+                default: return "Upcoming";
+            }
+        }
+
+        void Line(string label, string value)
+        {
+            var v = UIFactory.SpecRow(detail, label, 28f);
+            v.text = value;
+            v.fontSize = 16;
+        }
+
+        void RenderDetail()
+        {
+            UIFactory.ClearChildren(detail);
+            maxInput = null;
+            var lot = A.Lot(selectedLot);
+            if (lot == null) { UIFactory.EmptyState(detail, "Pick a lot", null); return; }
+            var ev = A.EventOf(lot);
+            var car = A.CarOf(lot);
+            var venue = AuctionRules.Venue(ev.venueId);
+            var def = car != null ? CarSalesServices.Database.Get(car.carId) : null;
+
+            var top = UIFactory.HRow(detail, 190, 16, "Top", false);
+            var pic = UIFactory.CarPicture(top, 180f, 320f);
+            if (car != null) UIFactory.SetCarPicture(pic, car);
+            var head = UIFactory.VCol(top, 4f);
+            UIFactory.Text(head, $"<b>Lot {lot.lotNo}</b>  -  {StatusText(lot)}", 20, UIFactory.Accent, TextAlignmentOptions.Left);
+            UIFactory.Text(head, def ? $"{def.year} {def.brand} {def.displayName}" : "(no longer here)", 24, UIFactory.TextMain, TextAlignmentOptions.Left, true);
+            UIFactory.Text(head, $"{AuctionRules.TypeName(ev.Type)}  -  {When(ev)}", 15, UIFactory.TextDim, TextAlignmentOptions.Left);
+            string current = string.IsNullOrEmpty(lot.leader) ? $"Opens at {UIFactory.Money(lot.startPrice)}" : $"Current bid {UIFactory.Money(lot.currentBid)} ({A.BidderName(lot.leader)})";
+            UIFactory.Text(head, $"Guide {UIFactory.Money(lot.estimate)}   -   {current}", 17, UIFactory.Gold, TextAlignmentOptions.Left, true);
+            if (ev.online && lot.Status == LotStatus.Live)
+                UIFactory.Text(head, $"Closes at {Mathf.FloorToInt(lot.endHour):00}:{Mathf.FloorToInt((lot.endHour % 1f) * 60f):00} (late bids add 2 minutes)", 14, UIFactory.TextDim, TextAlignmentOptions.Left);
+
+            var r = lot.report;
+            UIFactory.SectionTitle(detail, "Condition report (by the auction house)");
+            Line("Grade", $"{r.grade} / 5");
+            Line("Mileage", $"{r.claimedMileage:N0} km {(r.mileageVerified ? "" : $"<color={UIFactory.Hex(UIFactory.Warn)}>(unverified)</color>")}");
+            Line("Starts / drives", $"{(r.starts ? "Yes" : $"<color={UIFactory.Hex(UIFactory.Bad)}>No</color>")} / {(r.drives ? "Yes" : $"<color={UIFactory.Hex(UIFactory.Bad)}>No</color>")}");
+            Line("Keys", r.keys.ToString());
+            Line("Logbook (V5C)", r.v5cPresent ? "Present" : $"<color={UIFactory.Hex(UIFactory.Bad)}>Missing</color>");
+            Line("Title", venue.GuaranteesTitle ? "Guaranteed (any finance is cleared)" : $"<color={UIFactory.Hex(UIFactory.Warn)}>Not guaranteed - check the history</color>");
+            var issues = r.faults.Concat(r.damage).ToList();
+            var t = UIFactory.Text(detail, issues.Count == 0 ? "No faults or damage listed." : "Listed: " + string.Join(", ", issues) + (string.IsNullOrEmpty(r.notes) ? "" : $"\n{r.notes}"), 15, UIFactory.TextMain, TextAlignmentOptions.TopLeft);
+            t.textWrappingMode = TextWrappingModes.Normal;
+            t.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            var note = UIFactory.Text(detail, $"Reports can miss things ({venue.ReportReliability * 100f:0}% of faults are listed at this venue). " +
+                                              (venue.Physical ? "Inspect the car in the yard (no road test)." : "Run a history check before bidding."), 13, UIFactory.TextDim, TextAlignmentOptions.TopLeft);
+            note.textWrappingMode = TextWrappingModes.Normal;
+            UIFactory.LE(note, h: 36);
+
+            bool open = lot.Status == LotStatus.Upcoming || lot.Status == LotStatus.Live;
+            if (!open) return;
+            var acc = A.Account(ev.venueId);
+            UIFactory.SectionTitle(detail, acc != null ? $"Your bid  (buyer {acc.buyerNo})" : "Your bid");
+            var row = UIFactory.HRow(detail, 46, 10, "Bid", false);
+            maxInput = UIFactory.MakeInput(row, $"Max bid (at least {UIFactory.Money(AuctionRules.NextBid(lot))})", 44f);
+            maxInput.contentType = TMP_InputField.ContentType.IntegerNumber;
+            if (lot.playerMax > 0) maxInput.text = lot.playerMax.ToString();
+            var input = maxInput;
+            var set = UIFactory.Btn(row, ev.online || !(ev.day == CarRecords.Today && AuctionManager.PlayerInHall()) ? "Set max bid" : "Absentee max", UIFactory.Good,
+                                    () => { if (int.TryParse(input.text, out int v)) A.SetMaxBid(lot, v); }, 44f, 15f);
+            UIFactory.LE(set, h: 44, w: 160, flexW: 0);
+            if (lot.playerMax > 0)
+            {
+                var w = UIFactory.Btn(row, "Withdraw", UIFactory.Neutral, () => A.SetMaxBid(lot, 0), 44f, 14f);
+                UIFactory.LE(w, h: 44, w: 110, flexW: 0);
+            }
+            var row2 = UIFactory.HRow(detail, 44, 10, "Actions", false);
+            var watch = UIFactory.Btn(row2, lot.watched ? "Unwatch" : "Watch", UIFactory.CardLight, () => A.ToggleWatch(lot), 42f, 14f);
+            UIFactory.LE(watch, h: 42, w: 120, flexW: 0);
+            if (car != null)
+            {
+                var hc = UIFactory.Btn(row2, car.history.checkedHistory ? "History checked" : $"History check {UIFactory.Money(InspectionEngine.HistoryCheckCost)}", UIFactory.Accent,
+                                       () => { if (CarSalesServices.Workshop) CarSalesServices.Workshop.RunHistoryCheck(car); Refresh(); }, 42f, 14f);
+                UIFactory.LE(hc, h: 42, w: 200, flexW: 0);
+                hc.interactable = !car.history.checkedHistory;
+                if (car.history.checkedHistory)
                 {
-                    var b = interested[Random.Range(0, interested.Count)];
-                    currentBid = next;
-                    leader = b.name;
-                    timer = Mathf.Max(timer, ResetTime);
-                    Log($"{b.name} bids {UIFactory.Money(next)}");
+                    var h = car.history;
+                    var res = UIFactory.Text(detail, (h.writeOff == WriteOff.None ? "No write-off" : h.writeOff == WriteOff.CatN ? "WRITE-OFF Cat N" : "WRITE-OFF Cat S") + "  -  " +
+                                                     (h.outstandingFinance && !h.financeSettled ? (venue.GuaranteesTitle ? "finance (cleared by the auction)" : "OUTSTANDING FINANCE") : "no finance") +
+                                                     (h.clockingConfirmed ? "  -  MILEAGE ANOMALY" : ""), 15, h.writeOff != WriteOff.None || h.clockingConfirmed ? UIFactory.Bad : UIFactory.Good, TextAlignmentOptions.Left, true);
+                    UIFactory.LE(res, h: 24);
+                }
+                var display = selectedDisplay;
+                if (display && venue.Physical)
+                {
+                    var insp = UIFactory.Btn(row2, "Inspect the car", UIFactory.Warn, () => CarSalesServices.UI.inspection.Show(car, display), 42f, 14f);
+                    UIFactory.LE(insp, h: 42, w: 170, flexW: 0);
+                }
+                int found = InspectionEngine.KnownCount(car.faults);
+                if (found > 0)
+                {
+                    var f = UIFactory.Text(detail, $"Known faults ({found}): " + string.Join(", ", CarRecords.KnownFaults(car).Select(x => x.Def.Name)), 14, UIFactory.Warn, TextAlignmentOptions.TopLeft);
+                    f.textWrappingMode = TextWrappingModes.Normal;
+                    f.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
                 }
             }
-            UpdateLabels();
-            if (timer <= 0f) EndLot();
-        }
-
-        void UpdateLabels()
-        {
-            bidText.text = UIFactory.Money(currentBid);
-            leaderText.text = leader == "" ? "No bids yet" : leader == "You" ? $"<color={UIFactory.Hex(UIFactory.Good)}>You are the highest bidder!</color>" : $"Highest bidder: {leader}";
-            timerText.text = timer > 3f ? $"{timer:0}s left" : timer > 0f ? $"<color={UIFactory.Hex(UIFactory.Bad)}>Going... going... {timer:0.0}s</color>" : "";
-            timerBar.Set(Mathf.Clamp01(timer / LotTime));
-            timerBar.SetColor(timer > 4f ? UIFactory.Good : UIFactory.Bad);
-            bool canBid = running && leader != "You";
-            bidSmall.interactable = bidMed.interactable = bidLarge.interactable = canBid;
-            passButton.interactable = running;
-        }
-
-        void Pass()
-        {
-            if (!running) return;
-            if (leader == "You") { CarSalesServices.UI.Notify("You're leading - wait for the hammer or keep bidding."); return; }
-            timer = 0f;
-            EndLot();
-        }
-
-        void EndLot()
-        {
-            if (!running) return;
-            running = false;
-            var a = CarSalesServices.Auction;
-            a.Lots.Remove(lot);
-            if (leader == "You")
+            if (acc == null)
             {
-                if (CarSalesServices.Economy.TrySpend(currentBid))
+                var reg = UIFactory.Btn(detail, $"Register with {venue.Name} ({UIFactory.Money(AuctionRules.Deposit)} refundable deposit)", UIFactory.Accent, () => A.Register(ev.venueId), 42f, 15f);
+                UIFactory.LE(reg, h: 42, w: 520, flexW: 0);
+            }
+            if (!ev.online)
+            {
+                var hint = UIFactory.Text(detail, $"Live sale: be in the hall at {ev.startHour:00}:00 on day {ev.day} and raise your paddle (E). Your max bid works as an absentee bid if you're not there.",
+                                          13, UIFactory.TextDim, TextAlignmentOptions.TopLeft);
+                hint.textWrappingMode = TextWrappingModes.Normal;
+                UIFactory.LE(hint, h: 36);
+            }
+        }
+
+        // ------------------------------------------------------------------ BIDS
+        void RenderBids()
+        {
+            var rows = new List<UIFactory.Table.Row>();
+            foreach (var ev in A.Events)
+                foreach (var lot in A.LotsOf(ev).Where(l => l.playerMax > 0 || l.watched || l.buyer == AuctionRules.PlayerId))
                 {
-                    lot.purchasePrice = currentBid;
-                    lot.state = CarValueCalculator.DefaultState(lot);
-                    var bay = a.FreeParkingBay();
-                    CarSalesServices.Vehicles.AddOwnedCar(lot, bay.position, bay.eulerAngles.y);
-                    CarSalesServices.DayCycle.RegisterPurchase(currentBid);
-                    if (CarSalesServices.Progress) CarSalesServices.Progress.RegisterPurchase();
-                    float lie = lot.reportedCondition - lot.condition;
-                    lot.inspected = true;
-                    CarSalesServices.PlaySfx(Sfx.Success);
-                    string reveal = lie >= 5f ? $" Bad news: real condition is {lot.condition:0}% (claimed {lot.reportedCondition:0}%)." : " The condition was as described!";
-                    CarSalesServices.UI.Success("SOLD to you!", $"{UIFactory.Money(currentBid)}. The car is in the auction car park - drive it (F) or tow it (P).{reveal}");
-                    Log($"<color={UIFactory.Hex(UIFactory.Good)}><b>SOLD to you for {UIFactory.Money(currentBid)}!</b></color>");
+                    var car = A.CarOf(lot);
+                    var l = lot;
+                    bool leading = lot.leader == AuctionRules.PlayerId;
+                    string status = StatusText(lot) + (lot.Status == LotStatus.Live || lot.Status == LotStatus.Upcoming
+                        ? (lot.playerMax == 0 ? "" : leading ? $"  <color={UIFactory.Hex(UIFactory.Good)}>leading</color>" : string.IsNullOrEmpty(lot.leader) ? "" : $"  <color={UIFactory.Hex(UIFactory.Bad)}>outbid</color>") : "");
+                    rows.Add(new UIFactory.Table.Row
+                    {
+                        cells = new[] { lot.lotNo.ToString(), car?.Name ?? "-", $"{AuctionRules.TypeName(ev.Type)} day {ev.day}",
+                                        string.IsNullOrEmpty(lot.leader) ? "-" : UIFactory.Money(lot.currentBid), lot.playerMax > 0 ? UIFactory.Money(lot.playerMax) : "-", status },
+                        keys = new IComparable[] { lot.lotNo, car?.Name ?? "", ev.day * 100 + (int)ev.startHour, lot.currentBid, lot.playerMax, lot.status },
+                        onClick = () => ShowLot(l.id),
+                    });
                 }
-                else
+            bidsTable.SetRows(rows);
+        }
+
+        // ------------------------------------------------------------------ INVOICES
+        void RenderInvoices()
+        {
+            UIFactory.ClearChildren(invoicesList);
+            foreach (var inv in A.Invoices.OrderByDescending(i => i.issuedDay))
+            {
+                var venue = AuctionRules.Venue(inv.venueId);
+                var row = UIFactory.Panel(invoicesList, inv.id, UIFactory.CardBg, 1.8f);
+                UIFactory.LE(row, h: 96);
+                var h = UIFactory.Horizontal(row, 10, 12f);
+                h.padding = new RectOffset(16, 12, 8, 8);
+                h.childForceExpandHeight = false;
+                string state = inv.cancelled ? $"<color={UIFactory.Hex(UIFactory.Bad)}>Cancelled (deposit kept)</color>" :
+                               !inv.paid ? (CarRecords.Today > inv.dueDay ? $"<color={UIFactory.Hex(UIFactory.Bad)}>OVERDUE</color>" : $"Due day {inv.dueDay}") :
+                               inv.collected ? $"<color={UIFactory.Hex(UIFactory.Good)}>Paid and collected</color>" :
+                               $"Paid - waiting at the Auction Center car park (free until day {inv.freeStorageUntil}{(inv.storageFees > 0 ? $", storage so far {UIFactory.Money(inv.storageFees)}" : "")})";
+                var t = UIFactory.Text(row.transform,
+                    $"<b>{inv.id}</b>  -  {venue.Name} lot {inv.lotNo}  -  {state}\n" +
+                    $"<size=85%>Hammer {UIFactory.Money(inv.hammer)}  +  buyer's premium {UIFactory.Money(inv.premium)}" + (inv.internetFee > 0 ? $"  +  internet fee {UIFactory.Money(inv.internetFee)}" : "") +
+                    $"  +  VAT on fees {UIFactory.Money(inv.vat)}" + (inv.lateFees > 0 ? $"  +  late fees {UIFactory.Money(inv.lateFees)}" : "") + $"  =  <b>{UIFactory.Money(inv.Total)}</b></size>",
+                    16, UIFactory.TextMain, TextAlignmentOptions.Left);
+                UIFactory.LE(t, flexW: 1);
+                var i2 = inv;
+                if (!inv.paid && !inv.cancelled)
                 {
-                    CarSalesServices.Economy.ChangeReputation(-2f);
-                    CarSalesServices.UI.Error("You couldn't pay for the car! The lot is cancelled (-2 reputation).");
+                    var pay = UIFactory.Btn(row.transform, $"Pay {UIFactory.Money(inv.Total)}", UIFactory.Good, () => A.PayInvoice(i2), 46f, 16f);
+                    UIFactory.LE(pay, h: 46, w: 180, flexW: 0);
+                }
+                else if (inv.paid && !inv.collected)
+                {
+                    var gps = UIFactory.Btn(row.transform, "GPS to car park", UIFactory.Accent, () =>
+                    {
+                        var p = MapPlace.All.FirstOrDefault(x => x && x.placeName.ToLowerInvariant().Contains("auction"));
+                        if (p) { GpsSystem.SetTarget(p); CarSalesServices.UI.Success("GPS", "Route to the Auction Center."); }
+                    }, 46f, 15f);
+                    UIFactory.LE(gps, h: 46, w: 180, flexW: 0);
                 }
             }
-            else if (leader != "") Log($"Sold to {leader} for {UIFactory.Money(currentBid)}.");
-            else Log("No bids - lot withdrawn.");
-            UpdateLabels();
-            if (gameObject.activeInHierarchy) StartCoroutine(NextLotSoon());
+            if (invoicesList.childCount == 0) UIFactory.EmptyState(invoicesList, "No invoices", "Win a lot and its invoice appears here (payment due in 2 days).");
         }
 
-        IEnumerator NextLotSoon()
+        // ------------------------------------------------------------------ ACCOUNTS
+        void RenderAccounts()
         {
-            yield return new WaitForSecondsRealtime(2.5f);
-            if (gameObject.activeInHierarchy) StartLot();
-        }
-
-        void Finish()
-        {
-            running = false;
-            Log("<b>That's all for today.</b> New lots tomorrow.");
-            UpdateLabels();
-        }
-
-        void Log(string line) => logText.text = line + "\n" + logText.text;
-
-        void OnDisable()
-        {
-            // Leaving mid-lot: if you were winning, the car is yours.
-            if (running && leader == "You") EndLot();
-            running = false;
+            UIFactory.ClearChildren(accountsList);
+            foreach (var v in AuctionRules.Venues)
+            {
+                var acc = A.Account(v.Id);
+                var row = UIFactory.Panel(accountsList, v.Id, UIFactory.CardBg, 1.8f);
+                UIFactory.LE(row, h: 80);
+                var h = UIFactory.Horizontal(row, 10, 12f);
+                h.padding = new RectOffset(16, 12, 8, 8);
+                var t = UIFactory.Text(row.transform,
+                    $"<b>{v.Name}</b>  {(v.Physical ? "(hall + yard)" : "(online)")}\n<size=85%>" +
+                    (acc != null ? $"Buyer number <b>{acc.buyerNo}</b>  -  deposit {UIFactory.Money(acc.deposit)} held" : $"Not registered. Deposit {UIFactory.Money(AuctionRules.Deposit)}, refunded when you close the account.") +
+                    $"  -  {(v.GuaranteesTitle ? "title guaranteed" : "no title guarantee")}  -  reports list about {v.ReportReliability * 100f:0}% of faults</size>",
+                    16, UIFactory.TextMain, TextAlignmentOptions.Left);
+                UIFactory.LE(t, flexW: 1);
+                var id = v.Id;
+                var b = UIFactory.Btn(row.transform, acc != null ? "Close account" : "Register", acc != null ? UIFactory.Neutral : UIFactory.Accent,
+                                      () => { if (A.Registered(id)) A.CloseAccount(id); else A.Register(id); }, 44f, 15f);
+                UIFactory.LE(b, h: 44, w: 170, flexW: 0);
+            }
+            var fees = UIFactory.Text(accountsList,
+                $"Buyer's premium: under $1,000: $150  -  $1,000-2,999: $250  -  $3,000-4,999: $350  -  $5,000-9,999: $450  -  $10,000-19,999: $600  -  $20,000+: $750 + 1%.\n" +
+                $"Online sales add a {UIFactory.Money(AuctionRules.InternetFee)} internet fee. VAT 20% is charged on fees (not on the car). Pay within {AuctionRules.PaymentDays} days " +
+                $"({UIFactory.Money(AuctionRules.LateFeePerDay)}/day late; cancelled after {AuctionRules.CancelAfterDays}). Storage is free for {AuctionRules.FreeStorageDays} days, then {UIFactory.Money(AuctionRules.StoragePerDay)}/day.",
+                14, UIFactory.TextDim, TextAlignmentOptions.TopLeft);
+            fees.textWrappingMode = TextWrappingModes.Normal;
+            UIFactory.LE(fees, h: 80);
         }
     }
 }

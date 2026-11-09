@@ -1,3 +1,4 @@
+using CarSales.Foundation;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -45,7 +46,7 @@ namespace CarSales
         {
             if (IsMaxed(t)) { message = "Already at max level."; return false; }
             int cost = NextCost(t);
-            if (!CarSalesServices.Economy.TrySpend(cost)) { message = "Not enough money!"; return false; }
+            if (!CarSalesServices.Economy.TrySpend(cost, TxCategory.Upgrades, $"Upgrade - {t}")) { message = "Not enough money!"; return false; }
             levels[(int)t]++;
             CarSalesServices.DayCycle.RegisterExpense(cost);
             if (CarSalesServices.Progress) CarSalesServices.Progress.Stats.upgradesBought++;

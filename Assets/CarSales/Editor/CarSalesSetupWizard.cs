@@ -28,6 +28,7 @@ namespace CarSales.EditorTools
         const string Gen = Root + "/Generated";
         const string InputPath = Root + "/Input/CarSalesControls.inputactions";
         const string ScenePath = Gen + "/Scenes/DealershipTest.unity";
+        public const string GameScenePath = ScenePath;
         const string MenuScenePath = Gen + "/Scenes/MainMenu.unity";
         const int InteractLayer = 20;
         const int StudioLayer = 21;
@@ -58,7 +59,7 @@ namespace CarSales.EditorTools
 
                 EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
                 if (AssetDatabase.IsValidFolder(Gen)) AssetDatabase.DeleteAsset(Gen);
-                foreach (var f in new[] { "Materials", "Data/Cars", "Prefabs/CarModels", "Scenes" })
+                foreach (var f in new[] { "Materials", "Data/Cars", "Prefabs/CarModels", "Scenes", "Resources" })
                     EnsureFolder(Gen + "/" + f);
 
                 Progress("Materials", 0.08f);
@@ -76,6 +77,9 @@ namespace CarSales.EditorTools
 
                 Progress("Main menu", 0.95f);
                 BuildMainMenuScene(mats, db);
+
+                Progress("Test track", 0.97f);
+                BuildTestTrackScene(mats, db, actions);
                 EditorSceneManager.OpenScene(ScenePath);
 
                 AssetDatabase.SaveAssets();
@@ -83,6 +87,7 @@ namespace CarSales.EditorTools
                 EditorUtility.ClearProgressBar();
                 EditorUtility.DisplayDialog("Car Sales Simulator",
                     "Done!\n\nGame scene: " + ScenePath + "\nMain menu: " + MenuScenePath +
+                    "\nTest track: " + TestTrackScenePath +
                     "\n\nPress PLAY here to jump straight in, or open the MainMenu scene for the full flow.\n\n" +
                     "E interact | F drive | Tab inventory | M map | P phone | Esc menu\nSleep at home to end the day.\nF1 +$10,000 (debug) | F5/F9 save/load | F12 delete save",
                     "Let's go");
@@ -118,7 +123,8 @@ namespace CarSales.EditorTools
             { "moveAction", "Move" }, { "lookAction", "Look" }, { "jumpAction", "Jump" }, { "sprintAction", "Sprint" },
             { "interactAction", "Interact" }, { "toggleShopAction", "ToggleShop" }, { "closeAction", "CloseMenu" },
             { "brakeAction", "Jump" }, { "exitAction", "Interact" }, { "inventoryAction", "Inventory" },
-            { "vehicleAction", "Vehicle" }, { "mapAction", "Map" }, { "phoneAction", "Phone" },
+            { "vehicleAction", "Vehicle" }, { "mapAction", "Map" }, { "phoneAction", "Phone" }, { "cameraAction", "CameraView" },
+            { "gearUpAction", "GearUp" }, { "gearDownAction", "GearDown" },
         };
 
         /// <summary>Re-links every empty/broken InputActionReference in open scenes and Car Sales prefabs.</summary>
@@ -172,16 +178,24 @@ namespace CarSales.EditorTools
             EditorUtility.DisplayDialog("Car Sales", $"Re-linked {fixedCount} input action field(s).", "OK");
         }
 
-        [MenuItem("Tools/Car Sales/Delete Save File", priority = 20)]
+        [MenuItem("Tools/Car Sales/Delete All Saves", priority = 20)]
         static void DeleteSave()
         {
-            string path = Path.Combine(Application.persistentDataPath, "carsales_save.json");
-            if (File.Exists(path)) { File.Delete(path); Debug.Log("[CarSales] Deleted " + path); }
-            else Debug.Log("[CarSales] No save file at " + path);
+            if (!EditorUtility.DisplayDialog("Car Sales", "Delete ALL save slots (and their backups)?", "Delete", "Cancel")) return;
+            int deleted = 0;
+            var store = new CarSales.Foundation.SaveStore(SaveManager.SavesRoot);
+            for (int s = 1; s <= CarSales.Foundation.SaveStore.SlotCount; s++)
+                if (store.Exists(s)) { store.Delete(s); deleted++; }
+            if (File.Exists(SaveManager.LegacyFilePath)) { File.Delete(SaveManager.LegacyFilePath); deleted++; }
+            Debug.Log(deleted > 0 ? $"[CarSales] Deleted {deleted} save(s) in {Application.persistentDataPath}" : "[CarSales] No saves to delete.");
         }
 
         [MenuItem("Tools/Car Sales/Show Save Folder", priority = 21)]
-        static void ShowSaveFolder() => EditorUtility.RevealInFinder(Application.persistentDataPath);
+        static void ShowSaveFolder()
+        {
+            Directory.CreateDirectory(SaveManager.SavesRoot);
+            EditorUtility.RevealInFinder(SaveManager.SavesRoot);
+        }
 
         // ------------------------------------------------------------------ CHECKS
         static bool CheckTextMeshPro()
@@ -216,7 +230,7 @@ namespace CarSales.EditorTools
             return true;
         }
 
-        class ActionRefs { public InputActionReference move, look, jump, sprint, interact, toggleShop, closeMenu, inventory, vehicle, map, phone; }
+        class ActionRefs { public InputActionReference move, look, jump, sprint, interact, toggleShop, closeMenu, inventory, vehicle, map, phone, cameraView, gearUp, gearDown; }
 
         static ActionRefs LoadActions()
         {
@@ -227,7 +241,8 @@ namespace CarSales.EditorTools
             {
                 move = Find("Move"), look = Find("Look"), jump = Find("Jump"), sprint = Find("Sprint"),
                 interact = Find("Interact"), toggleShop = Find("ToggleShop"), closeMenu = Find("CloseMenu"), inventory = Find("Inventory"),
-                vehicle = Find("Vehicle"), map = Find("Map"), phone = Find("Phone")
+                vehicle = Find("Vehicle"), map = Find("Map"), phone = Find("Phone"), cameraView = Find("CameraView"),
+                gearUp = Find("GearUp"), gearDown = Find("GearDown")
             };
             if (refs.move && refs.look && refs.interact) return refs;   // the rest fall back to defaults at runtime
             EditorUtility.DisplayDialog("Car Sales Simulator",
@@ -247,8 +262,23 @@ namespace CarSales.EditorTools
             public Material[] buildings; public Material windowsGlow;
         }
 
+        static bool loadMaterialsOnly;
+
+        /// <summary>The town's materials as already saved by Build Everything (made if missing). Used by the World Builder.</summary>
+        static Mats LoadMats()
+        {
+            loadMaterialsOnly = true;
+            try { return CreateMaterials(); }
+            finally { loadMaterialsOnly = false; }
+        }
+
         static Material M(string name, Color c, float smooth = 0.3f, bool emissive = false, float emission = 2f, float metallic = 0f)
         {
+            if (loadMaterialsOnly)
+            {
+                var existing = AssetDatabase.LoadAssetAtPath<Material>($"{Gen}/Materials/{name}.mat");
+                if (existing) return existing;
+            }
             var m = new Material(litShader) { name = name };
             if (m.HasProperty("_BaseColor")) m.SetColor("_BaseColor", c);
             if (m.HasProperty("_Color")) m.SetColor("_Color", c);
@@ -397,10 +427,19 @@ namespace CarSales.EditorTools
                 def.transmission = s.gearbox;
                 def.description = s.desc;
                 def.displayPrefab = model;
+                // Tuned handling (Vehicle Studio) lives outside Generated, so it survives a rebuild.
+                def.physicsOverride = AssetDatabase.LoadAssetAtPath<VehiclePhysicsProfileAsset>($"{VehicleStudioWindow.ProfileFolder}/Physics_{s.id}.asset");
                 AssetDatabase.CreateAsset(def, $"{Gen}/Data/Cars/Car_{s.id}.asset");
                 db.cars.Add(def);
             }
-            AssetDatabase.CreateAsset(db, $"{Gen}/Data/CarDatabase.asset");
+            // Cars imported with the Asset Studio live in Assets/CarSales/Data/Cars and are kept on every rebuild.
+            if (AssetDatabase.IsValidFolder(Root + "/Data/Cars"))
+                foreach (var g in AssetDatabase.FindAssets("t:CarDefinition", new[] { Root + "/Data/Cars" }))
+                {
+                    var imported = AssetDatabase.LoadAssetAtPath<CarDefinition>(AssetDatabase.GUIDToAssetPath(g));
+                    if (imported && imported.displayPrefab && !db.cars.Contains(imported)) db.cars.Add(imported);
+                }
+            AssetDatabase.CreateAsset(db, $"{Gen}/Resources/{CarDatabase.ResourceName}.asset");   // in Resources: scenes can find it even without a reference
             return db;
         }
 
@@ -529,6 +568,7 @@ namespace CarSales.EditorTools
 
             var env = new GameObject("Town");
             var town = BuildTown(env.transform, m, db, carDisplayPrefab, customerPrefab);
+            BuildLayoutSites(env.transform, m, carDisplayPrefab, customerPrefab, town.surfaces);   // phase 8: your World Builder sites
 
             Progress("Systems", 0.8f);
             var systems = BuildSystems(db, a, carDisplayPrefab);
@@ -538,6 +578,8 @@ namespace CarSales.EditorTools
             es.AddComponent<InputSystemUIInputModule>().AssignDefaultActions();
 
             PrefabUtility.SaveAsPrefabAssetAndConnect(systems, $"{Gen}/Prefabs/CarSalesSystems.prefab", InteractionMode.AutomatedAction);
+            int swapped = PlaceholderReplacer.ApplyToOpenScene(false);   // your imported buildings/props (Asset Studio > Town)
+            if (swapped > 0) Debug.Log($"[CarSales] {swapped} placeholders replaced with your imported models.");
             EditorSceneManager.SaveScene(scene, ScenePath);
 
             Progress("Baking NavMesh", 0.9f);
@@ -615,6 +657,7 @@ namespace CarSales.EditorTools
             cam.fieldOfView = 70f;
             cam.cullingMask = ~((1 << StudioLayer) | (1 << MinimapLayer));
             camGo.AddComponent<AudioListener>();
+            SetUpLooks(cam);
 
             var fpc = player.AddComponent<SimpleFirstPersonController>();
             Set(fpc, "cameraPivot", pivot);
@@ -639,6 +682,14 @@ namespace CarSales.EditorTools
             systems.AddComponent<PropertyManager>();
             systems.AddComponent<TowService>();
             systems.AddComponent<AuctionManager>();
+            systems.AddComponent<WorkshopManager>();
+            systems.AddComponent<MarketManager>();
+            systems.AddComponent<StaffManager>();
+            systems.AddComponent<CrmManager>();
+            systems.AddComponent<SourcingManager>();
+            systems.AddComponent<WorldManager>();
+            systems.AddComponent<BusinessManager>();
+            systems.AddComponent<AmbienceManager>();
             Set(systems.AddComponent<CarSalesBootstrap>(), "database", db);
             systems.AddComponent<EconomyManager>();
             systems.AddComponent<InventoryManager>();
@@ -657,6 +708,9 @@ namespace CarSales.EditorTools
             Set(drive, "brakeAction", a.jump);
             Set(drive, "exitAction", a.interact);
             Set(drive, "vehicleAction", a.vehicle);
+            Set(drive, "cameraAction", a.cameraView);
+            Set(drive, "gearUpAction", a.gearUp);
+            Set(drive, "gearDownAction", a.gearDown);
             systems.AddComponent<DebugCheats>();
 
             // The UI builds itself at runtime (UIManager.Awake).
@@ -709,6 +763,17 @@ namespace CarSales.EditorTools
             model.transform.SetParent(showcase.transform, false);
             showcase.AddComponent<MenuShowcase>();
 
+            // A few more cars on the stage for the cinematic shots.
+            var others = db.cars.Where(c => c && c != sports && c.displayPrefab).Take(2).ToList();
+            var slots = new[] { (new Vector3(-6.5f, 0.02f, 4.5f), 35f), (new Vector3(10f, 0.02f, 5f), -40f) };
+            for (int i = 0; i < others.Count; i++)
+            {
+                var extra = (GameObject)PrefabUtility.InstantiatePrefab(others[i].displayPrefab);
+                extra.name = "StageCar_" + others[i].displayName;
+                extra.transform.SetPositionAndRotation(slots[i].Item1, Quaternion.Euler(0f, slots[i].Item2, 0f));
+            }
+            AddReflectionProbe(null, "StageReflections", new Vector3(1.8f, 3f, 0f), new Vector3(30f, 8f, 20f));
+
             var camGo = new GameObject("Main Camera") { tag = "MainCamera" };
             camGo.transform.position = new Vector3(-0.6f, 1.9f, -8.5f);
             camGo.transform.LookAt(new Vector3(0.4f, 0.7f, 0f));
@@ -716,6 +781,8 @@ namespace CarSales.EditorTools
             cam.fieldOfView = 50f;
             cam.cullingMask = ~((1 << StudioLayer) | (1 << MinimapLayer));
             camGo.AddComponent<AudioListener>();
+            camGo.AddComponent<MenuCinematic>().target = showcase.transform;
+            SetUpLooks(cam);
 
             new GameObject("Audio").AddComponent<AudioManager>();
             var es = new GameObject("EventSystem", typeof(EventSystem));

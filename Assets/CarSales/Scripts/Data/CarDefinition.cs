@@ -21,5 +21,7 @@ namespace CarSales
         public string fuelType = "Petrol";
         public string transmission = "Automatic";
         [TextArea] public string description;
+        [Tooltip("Optional. Replaces the handling preset for this car's class (create one in Tools > Car Sales > Vehicle Studio).")]
+        public VehiclePhysicsProfileAsset physicsOverride;
     }
 }

@@ -1,3 +1,4 @@
+using CarSales.Foundation;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -47,11 +48,21 @@ namespace CarSales
         }
 
         public PropertyInfo Get(string id) => properties.Find(p => p.id == id);
+
+        /// <summary>Phase 8: properties added by World Builder sites (once per id).</summary>
+        public void RegisterProperty(PropertyInfo info)
+        {
+            if (info == null || string.IsNullOrEmpty(info.id) || properties.Exists(p => p.id == info.id)) return;
+            properties.Add(info);
+            OnPropertiesChanged?.Invoke();
+        }
         public bool Owns(string id) => !string.IsNullOrEmpty(id) && owned.Contains(id);
         public PropertyInfo ActiveHomeInfo => Get(ActiveHome) ?? Get(StarterHome);
         public float WakeHour => ActiveHomeInfo != null ? ActiveHomeInfo.wakeHour : 8f;
 
-        public int DailyIncome => properties.Where(p => Owns(p.id)).Sum(p => p.dailyIncome);
+        /// <summary>Phase 9: developed properties earn more (BusinessManager.IncomeFactor).</summary>
+        public int DailyIncome => properties.Where(p => Owns(p.id)).Sum(p => IncomeOf(p));
+        public int IncomeOf(PropertyInfo p) => Mathf.RoundToInt(p.dailyIncome * (CarSalesServices.Business ? CarSalesServices.Business.IncomeFactor(p.id) : 1f));
         public int DailyCosts => properties.Where(p => Owns(p.id)).Sum(p => p.dailyCost);
         /// <summary>Counts toward net worth (80% of purchase price).</summary>
         public int PortfolioValue => Mathf.RoundToInt(properties.Where(p => Owns(p.id)).Sum(p => p.price) * 0.8f);
@@ -61,7 +72,7 @@ namespace CarSales
             var p = Get(id);
             if (p == null) { message = "Unknown property."; return false; }
             if (Owns(id)) { message = "You already own this."; return false; }
-            if (!CarSalesServices.Economy.TrySpend(p.price)) { message = $"You need {UIFactory.Money(p.price)} to buy {p.displayName}."; return false; }
+            if (!CarSalesServices.Economy.TrySpend(p.price, TxCategory.PropertyPurchase, $"Bought {p.displayName}", p.id)) { message = $"You need {UIFactory.Money(p.price)} to buy {p.displayName}."; return false; }
             owned.Add(id);
             CarSalesServices.DayCycle.RegisterExpense(p.price);
             CarSalesServices.PlaySfx(Sfx.Success);

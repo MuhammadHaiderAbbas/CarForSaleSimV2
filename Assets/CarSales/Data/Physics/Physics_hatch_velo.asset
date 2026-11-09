@@ -1,0 +1,66 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 57cd2cb3d0e0e2b4d9bd687580eea2dd, type: 3}
+  m_Name: Physics_hatch_velo
+  m_EditorClassIdentifier: CarSales.Runtime::CarSales.VehiclePhysicsProfileAsset
+  profile:
+    name: Velo
+    vehicleClass: 0
+    powertrain: 0
+    drivetrain: 0
+    engine:
+      idleRpm: 850
+      redlineRpm: 6500
+      peakTorqueNm: 118
+      peakTorqueRpm: 3500
+      plateauEndRpm: 4200
+      engineBrakeNm: 18.88
+    gearbox:
+      ratios:
+      - 3.55
+      - 1.95
+      - 1.3
+      - 0.97
+      - 0.78
+      reverseRatio: 3.3725
+      finalDrive: 4.1
+      upshiftRpm: 6000
+      downshiftRpm: 2100
+      shiftTime: 0.25
+      efficiency: 0.9
+    electric:
+      maxTorqueNm: 300
+      maxPowerKw: 150
+      maxRpm: 12000
+      ratio: 9
+      regenFraction: 0.25
+      efficiency: 0.92
+    chassis:
+      massKg: 1080
+      centerOfMassHeight: 0.42
+      wheelRadius: 0.3
+      suspensionDistance: 0.2
+      springScale: 1
+      damperScale: 1
+      forwardGrip: 1
+      sidewaysGrip: 1.05
+      maxSteerAngle: 37
+      highSpeedSteerFactor: 0.35
+      antiRollForce: 6000
+      brakeStrength: 1
+      frontBrakeBias: 0.65
+      handbrakeTorque: 2500
+      dragArea: 0.62
+      rollingResistance: 0.013
+      downforce: 1.2
+      topSpeedLimitKmh: 0
+    energyPercentPerKm: 4

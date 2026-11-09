@@ -11,13 +11,14 @@ namespace CarSales
 
         public override void Build()
         {
-            var body = UIFactory.Window(Root, "Paused", new Vector2(520f, 600f), CloseAll);
+            var body = UIFactory.Window(Root, Loc.T("pause.title", "Paused"), new Vector2(520f, 680f), CloseAll);
             UIFactory.Vertical(body, 0, 14f);
-            UIFactory.Btn(body, "Resume", UIFactory.Good, CloseAll, 62f, 22f);
-            UIFactory.Btn(body, "Save Game", UIFactory.Accent, () => { CarSalesServices.Save.SaveGame(); CarSalesServices.UI.Success("Saved", "Your progress has been saved."); }, 62f, 22f);
-            UIFactory.Btn(body, "Settings", UIFactory.Neutral, () => CarSalesServices.UI.settings.Show(), 62f, 22f);
-            mainMenuButton = UIFactory.Btn(body, "Save & Main Menu", UIFactory.AccentDark, GoToMainMenu, 62f, 22f);
-            UIFactory.Btn(body, "Save & Quit", UIFactory.Bad, () => { CarSalesServices.Save.SaveGame(); QuitGame(); }, 62f, 22f);
+            UIFactory.Btn(body, Loc.T("pause.resume", "Resume"), UIFactory.Good, CloseAll, 62f, 22f);
+            UIFactory.Btn(body, Loc.T("pause.save", "Save Game"), UIFactory.Accent, () => { CarSalesServices.Save.SaveGame(); CarSalesServices.UI.Success("Saved", "Your progress has been saved."); }, 62f, 22f);
+            UIFactory.Btn(body, Loc.T("menu.settings", "Settings"), UIFactory.Neutral, () => CarSalesServices.UI.settings.Show(), 62f, 22f);
+            UIFactory.Btn(body, Loc.T("menu.credits", "Credits"), UIFactory.Neutral, () => CreditsUI.Show(transform.root), 52f, 20f);
+            mainMenuButton = UIFactory.Btn(body, Loc.T("pause.mainmenu", "Save & Main Menu"), UIFactory.AccentDark, GoToMainMenu, 62f, 22f);
+            UIFactory.Btn(body, Loc.T("pause.quit", "Save & Quit"), UIFactory.Bad, () => { CarSalesServices.Save.SaveGame(); QuitGame(); }, 62f, 22f);
         }
 
         public void Show()

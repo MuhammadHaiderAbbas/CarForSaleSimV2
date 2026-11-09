@@ -29,8 +29,12 @@ namespace CarSales
         public MapUI map;
         public PhoneUI phone;
         public AuctionUI auction;
+        public PrivateSellerUI privateSeller;
+        public ListingEditorUI listingEditor;
+        public HandoverUI handover;
         public VehicleDetailsUI vehicleDetails;
         public InspectionUI inspection;
+        public PartsUI parts;
         public PurchaseConfirmUI purchaseConfirm;
         public CarMenuUI carMenu;
         public GarageUI garage;
@@ -47,6 +51,7 @@ namespace CarSales
         public GameObject OpenPanel => openPanel;
 
         GameObject openPanel;
+        readonly System.Collections.Generic.List<GameObject> history = new System.Collections.Generic.List<GameObject>();
         RectTransform toastArea;
         InputAction close, inventoryKey, mapKey, phoneKey;
 
@@ -70,6 +75,7 @@ namespace CarSales
             realEstate = computerHub.RealEstate;
             vehicleDetails = Create<VehicleDetailsUI>("VehicleDetails");
             inspection = Create<InspectionUI>("Inspection");
+            parts = Create<PartsUI>("Parts");
             purchaseConfirm = Create<PurchaseConfirmUI>("PurchaseConfirm");
             carMenu = Create<CarMenuUI>("CarMenu");
             garage = Create<GarageUI>("Garage");
@@ -83,6 +89,9 @@ namespace CarSales
             map = Create<MapUI>("Map");
             phone = Create<PhoneUI>("Phone");
             auction = Create<AuctionUI>("Auction");
+            privateSeller = Create<PrivateSellerUI>("PrivateSeller");
+            listingEditor = Create<ListingEditorUI>("ListingEditor");
+            handover = Create<HandoverUI>("Handover");
 
             toastArea = UIFactory.Rect("Notifications", transform);
             UIFactory.Place(toastArea, Vector2.one, Vector2.one, new Vector2(-24f, -150f), new Vector2(440f, 640f));
@@ -101,9 +110,15 @@ namespace CarSales
             var scaler = GetComponent<CanvasScaler>();
             if (!scaler) scaler = gameObject.AddComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1920f, 1080f);
+            scaler.referenceResolution = GameSettings.UiReferenceResolution;
             scaler.matchWidthOrHeight = 0.5f;
             if (!GetComponent<GraphicRaycaster>()) gameObject.AddComponent<GraphicRaycaster>();
+        }
+
+        void ApplyUiScale(float _)
+        {
+            var scaler = GetComponent<CanvasScaler>();
+            if (scaler) scaler.referenceResolution = GameSettings.UiReferenceResolution;
         }
 
         T Create<T>(string name, bool active = false) where T : UIPanel
@@ -126,6 +141,7 @@ namespace CarSales
             if (inventoryKey != null) inventoryKey.performed += OnInventoryInput;
             if (mapKey != null) mapKey.performed += OnMapInput;
             if (phoneKey != null) phoneKey.performed += OnPhoneInput;
+            GameSettings.OnUiScaleChanged += ApplyUiScale;
         }
 
         void OnMapInput(InputAction.CallbackContext _)
@@ -146,6 +162,7 @@ namespace CarSales
             if (inventoryKey != null) inventoryKey.performed -= OnInventoryInput;
             if (mapKey != null) mapKey.performed -= OnMapInput;
             if (phoneKey != null) phoneKey.performed -= OnPhoneInput;
+            GameSettings.OnUiScaleChanged -= ApplyUiScale;
             Time.timeScale = 1f;
         }
 
@@ -157,14 +174,47 @@ namespace CarSales
 
         void OnCloseInput(InputAction.CallbackContext _)
         {
+            // An open dialog (UIFactory.Modal) eats Esc first.
+            var modal = transform.Find("Modal");
+            if (modal)
+            {
+                if (openPanel == modal.gameObject) Close();
+                Destroy(modal.gameObject);
+                return;
+            }
             if (openPanel)
             {
                 if (IsModal(openPanel)) return;
-                if (settings && openPanel == settings.gameObject) { pause.Show(); return; }
-                Close();
+                Back();
             }
             else if (pause) pause.Show();
         }
+
+        /// <summary>
+        /// Esc / gamepad B: the open screen may handle it itself (phone -> home screen, computer -> desktop);
+        /// otherwise return to the screen it was opened from, or close the menus.
+        /// </summary>
+        public void Back()
+        {
+            if (!openPanel) return;
+            foreach (var h in openPanel.GetComponents<IBackHandler>())
+                if (h.HandleBack()) return;
+            while (history.Count > 0)
+            {
+                var prev = history[history.Count - 1];
+                history.RemoveAt(history.Count - 1);
+                if (!prev || prev == openPanel) continue;
+                openPanel.SetActive(false);
+                openPanel = null;
+                Open(prev, false);
+                return;
+            }
+            if (settings && openPanel == settings.gameObject && pause) { history.Clear(); pause.Show(); return; }
+            Close();
+        }
+
+        /// <summary>True when Back would return to another screen instead of closing.</summary>
+        public bool CanGoBack => history.Exists(p => p && p != openPanel);
 
         void OnInventoryInput(InputAction.CallbackContext _)
         {
@@ -174,13 +224,23 @@ namespace CarSales
             inventory.Show();
         }
 
-        public void Open(GameObject panel)
+        public void Open(GameObject panel) => Open(panel, true);
+
+        void Open(GameObject panel, bool remember)
         {
+            if (remember)
+            {
+                int existing = history.IndexOf(panel);
+                if (existing >= 0) history.RemoveRange(existing, history.Count - existing);   // no loops
+                else if (openPanel && openPanel != panel && !IsModal(openPanel)) history.Add(openPanel);
+                if (history.Count > 12) history.RemoveAt(0);
+            }
             if (openPanel && openPanel != panel) openPanel.SetActive(false);
             openPanel = panel;
             panel.SetActive(true);
             panel.transform.SetAsLastSibling();
             if (toastArea) toastArea.SetAsLastSibling();
+            UITransition.Play(panel);
             Time.timeScale = IsPausePanel(panel) ? 0f : 1f;
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
@@ -189,6 +249,7 @@ namespace CarSales
 
         public void Close()
         {
+            history.Clear();
             if (!openPanel) return;
             var panel = openPanel;
             openPanel = null;

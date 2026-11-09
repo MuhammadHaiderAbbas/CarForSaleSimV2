@@ -1,3 +1,4 @@
+using CarSales.Foundation;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -66,7 +67,7 @@ namespace CarSales
                 bay = dest.zone.FreeBay();
                 if (bay == null) { message = $"{dest.name} is full right now."; return false; }
             }
-            if (!CarSalesServices.Economy.TrySpend(cost)) { message = $"The tow costs {UIFactory.Money(cost)} - not enough money."; return false; }
+            if (!CarSalesServices.Economy.TrySpend(cost, TxCategory.Transport, $"Tow truck - {car.Definition.displayName} to {dest.name}", car.Data.instanceId)) { message = $"The tow costs {UIFactory.Money(cost)} - not enough money."; return false; }
             CarSalesServices.DayCycle.RegisterExpense(cost);
 
             if (spot != null) CarSalesServices.Vehicles.PlaceAtSpot(car, dest.dealer, spot);
@@ -83,7 +84,7 @@ namespace CarSales
             if (!player || !place) { message = "No taxi available."; return false; }
             if (CarSalesServices.TestDrive && CarSalesServices.TestDrive.IsDriving) { message = "Get out of the car first (F)."; return false; }
             int cost = TaxiCost(player.transform.position, place.ArrivalPosition);
-            if (!CarSalesServices.Economy.TrySpend(cost)) { message = $"The taxi costs {UIFactory.Money(cost)} - not enough money."; return false; }
+            if (!CarSalesServices.Economy.TrySpend(cost, TxCategory.Transport, $"Taxi to {place.placeName}")) { message = $"The taxi costs {UIFactory.Money(cost)} - not enough money."; return false; }
             CarSalesServices.DayCycle.RegisterExpense(cost);
             float minutes = Mathf.Clamp(Flat(player.transform.position, place.ArrivalPosition) / 8f, 5f, 40f);
             CarSalesServices.DayCycle.AdvanceTime(minutes / 60f);

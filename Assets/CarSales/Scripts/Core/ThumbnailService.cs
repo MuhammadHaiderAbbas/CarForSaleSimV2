@@ -19,7 +19,7 @@ namespace CarSales
         [SerializeField] Vector3 studioPosition = new Vector3(0f, -500f, 0f);
 
         class Entry { public RenderTexture rt; public string key; public int lastUse; }
-        class Job { public CarInstance car; public Entry entry; }
+        class Job { public CarInstance car; public Entry entry; public float yaw; }
 
         readonly Dictionary<string, Entry> cache = new Dictionary<string, Entry>();
         readonly Queue<Job> queue = new Queue<Job>();
@@ -96,25 +96,31 @@ namespace CarSales
         }
 
         /// <summary>Returns a texture for the car (it fills in a frame later if it isn't rendered yet).</summary>
-        public Texture Get(CarInstance car)
+        public Texture Get(CarInstance car) => Get(car, 0);
+
+        /// <summary>Listing photo from another angle (0 = front three-quarter, 1 = side, 2 = rear, 3 = other side...).</summary>
+        public Texture Get(CarInstance car, int angle)
         {
             if (car == null || string.IsNullOrEmpty(car.instanceId)) return null;
             string key = ColorUtility.ToHtmlStringRGB(car.paintColor) + "|" + Mathf.RoundToInt(car.cleanliness / 10f);
-            if (!cache.TryGetValue(car.instanceId, out var e))
+            string id = angle == 0 ? car.instanceId : car.instanceId + "#" + angle;
+            if (!cache.TryGetValue(id, out var e))
             {
                 e = new Entry { rt = new RenderTexture(size.x, size.y, 16) { name = "CarPhoto_" + car.carId } };
                 e.rt.Create();
-                cache[car.instanceId] = e;
+                cache[id] = e;
                 Trim();
             }
             e.lastUse = ++useCounter;
             if (e.key != key)
             {
                 e.key = key;
-                queue.Enqueue(new Job { car = car, entry = e });
+                queue.Enqueue(new Job { car = car, entry = e, yaw = AngleYaw(angle) });
             }
             return e.rt;
         }
+
+        public static float AngleYaw(int angle) { float[] yaws = { 0f, 55f, 160f, -60f, 110f, -140f }; return yaws[Mathf.Abs(angle) % yaws.Length]; }
 
         void Trim()
         {
@@ -142,7 +148,7 @@ namespace CarSales
 
                 var model = Instantiate(def.displayPrefab, anchor);
                 model.transform.localPosition = Vector3.zero;
-                model.transform.localRotation = Quaternion.identity;
+                model.transform.localRotation = Quaternion.Euler(0f, job.yaw, 0f);
                 UIFactory.SetLayer(model, StudioLayer);
                 var visual = model.GetComponent<CarVisual>();
                 if (visual) visual.Apply(job.car.paintColor, 1f - job.car.cleanliness / 100f);

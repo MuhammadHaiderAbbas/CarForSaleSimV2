@@ -1,24 +1,31 @@
+using System;
+using CarSales.Sim;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace CarSales
 {
     /// <summary>
-    /// Driving any car you own. F = get in / get out (the car stays where you leave it).
+    /// Driving any car you own. F = get in / get out (the car stays where you leave it). C = camera view.
+    /// Uses realistic wheel physics (WheelVehicleController) or, if chosen in Settings or if the model can't be
+    /// set up, the simple ArcadeCarController.
     /// While driving, E does the context action: park in a free dealership spot, refuel at a fuel station,
     /// wash at the car wash, repair at the workshop. Driving uses fuel and adds mileage.
     /// (Named TestDriveManager for compatibility with older versions.)
     /// </summary>
     public class TestDriveManager : MonoBehaviour
     {
-        [SerializeField] InputActionReference moveAction, brakeAction, exitAction, vehicleAction;
-        [SerializeField] Vector3 cameraOffset = new Vector3(0f, 2.8f, -7f);
-        [SerializeField] float cameraPitch = 12f;
+        [SerializeField] InputActionReference moveAction, brakeAction, exitAction, vehicleAction, cameraAction, gearUpAction, gearDownAction;
+        [Tooltip("Arcade mode only (realistic cars use their physics profile).")]
         [SerializeField] float fuelPercentPerKm = 4f;      // 100% tank = 25 km
 
         public bool IsDriving { get; private set; }
         public CarDisplay CurrentCar => car;
-        public float SpeedKmh => car && vehicleController ? Mathf.Abs(vehicleController.Speed) * 3.6f : 0f;
+        public float SpeedKmh => car && driver != null ? Mathf.Abs(driver.Speed) * 3.6f : 0f;
+        public string Gear => car && driver != null ? driver.GearLabel : "";
+        public float Rpm => car && driver != null ? driver.Rpm : 0f;
+        /// <summary>The realistic controller of the current drive (null in arcade mode).</summary>
+        public WheelVehicleController PhysicsController => driver as WheelVehicleController;
         public float Fuel => car ? car.Data.fuel : 0f;
         public string ContextPrompt { get; private set; } = "";
         public bool BlocksInteraction => IsDriving || Time.frameCount == endFrame;
@@ -30,14 +37,18 @@ namespace CarSales
 
         CarDisplay car;
         GameObject vehicle;
-        ArcadeCarController vehicleController;
+        IVehicleDriver driver;
+        VehicleProfile profile;
+        Bounds carBounds;
+        GameObject vehicleModel;
         Transform cam, camParent;
+        VehicleCamera vehicleCamera;
         Vector3 camLocalPos, lastPos;
         Quaternion camLocalRot;
         MenuInputBlocker blocker;
-        InputAction move, brake, contextKey, vehicleKey;
+        InputAction move, brake, contextKey, vehicleKey, cameraKey, gearUpKey, gearDownKey;
         int endFrame = -1;
-        float distanceAccum, contextTimer;
+        float distanceAccum, wearAccum, contextTimer;
         bool warnedEmpty;
 
         void Awake() => CarSalesServices.TestDrive = this;
@@ -48,6 +59,9 @@ namespace CarSales
             brake = CarSalesInput.Resolve(brakeAction, "Jump");
             contextKey = CarSalesInput.Resolve(exitAction, "Interact");
             vehicleKey = CarSalesInput.Resolve(vehicleAction, "Vehicle");
+            cameraKey = CarSalesInput.Resolve(cameraAction, "CameraView");
+            gearUpKey = CarSalesInput.Resolve(gearUpAction, "GearUp");
+            gearDownKey = CarSalesInput.Resolve(gearDownAction, "GearDown");
             if (contextKey != null) contextKey.performed += OnContextKey;
             if (vehicleKey != null) vehicleKey.performed += OnVehicleKey;
         }
@@ -60,7 +74,7 @@ namespace CarSales
 
         void Start() { if (CarSalesServices.UI) CarSalesServices.UI.OnMenuStateChanged += HandleMenu; }
         void OnDestroy() { if (CarSalesServices.UI) CarSalesServices.UI.OnMenuStateChanged -= HandleMenu; }
-        void HandleMenu(bool open) { if (vehicleController) vehicleController.enabled = !open; }
+        void HandleMenu(bool open) { if (driver != null && vehicle) driver.enabled = !open; }
 
         // ------------------------------------------------------------------ INPUT
         void OnVehicleKey(InputAction.CallbackContext _)
@@ -102,6 +116,10 @@ namespace CarSales
             if (target.IsForSaleListing) { reason = "Buy the car first."; return false; }
             if (!Camera.main) { reason = "No main camera found."; return false; }
             if (target.Data.fuel <= 0.5f) { reason = "The tank is empty! Tow it to a fuel station (phone, P)."; return false; }
+            if (target.Data.documents != null && target.Data.documents.generated && target.Data.documents.keys <= 0)
+            { reason = "There's no key for this car. Get one cut by the locksmith (computer: Workshop > Paperwork)."; return false; }
+            if (!CarParts.Effects(target.Data).CanStart)
+            { reason = "It won't start - the 12V battery or starter motor is dead. Repair the electronics (tow it to the workshop)."; return false; }
             return true;
         }
 
@@ -112,19 +130,85 @@ namespace CarSales
             car = target;
             warnedEmpty = false;
 
+            profile = VehicleProfileResolver.For(car.Definition);
+            driver = null;
+            if (GameSettings.Driving == DrivingModel.Realistic)
+            {
+                try
+                {
+                    var model = CreateVehicleShell();
+                    var physics = WheelVehicleController.Setup(vehicle, model, profile, CarParts.Effects(car.Data));
+                    carBounds = physics.BodyBounds;
+                    driver = physics;
+                }
+                catch (Exception e)
+                {
+                    Debug.LogWarning($"[CarSales] Realistic driving unavailable for {car.Definition.displayName} ({e.Message}). Using arcade handling.");
+                    if (vehicle) DestroyImmediate(vehicle);
+                    driver = null;
+                }
+            }
+            if (driver == null)
+            {
+                CreateVehicleShell();
+                var cc = vehicle.AddComponent<CharacterController>();
+                cc.radius = 1.0f;
+                cc.height = 2.0f;
+                cc.center = new Vector3(0f, 1.0f, 0f);
+                cc.stepOffset = 0.35f;
+                cc.slopeLimit = 35f;
+                driver = vehicle.AddComponent<ArcadeCarController>();
+                carBounds = new Bounds(new Vector3(0f, 0.8f, 0f), new Vector3(1.9f, 1.6f, 4.6f));
+            }
+            driver.MoveAction = move;
+            driver.BrakeAction = brake;
+            driver.GearUpAction = gearUpKey;
+            driver.GearDownAction = gearDownKey;
+            driver.OnImpact += HandleImpact;
+            vehicle.AddComponent<EngineAudio>().Init(driver, driver is WheelVehicleController ? profile : null);
+            vehicle.AddComponent<VehicleTelemetry>().Init(driver, car);
+            car.gameObject.SetActive(false);
+
+            cam = Camera.main.transform;
+            camParent = cam.parent;
+            camLocalPos = cam.localPosition;
+            camLocalRot = cam.localRotation;
+            cam.SetParent(null, true);
+            vehicleCamera = cam.gameObject.AddComponent<VehicleCamera>();
+            vehicleCamera.Init(vehicle.transform, cameraKey, carBounds);
+
+            blocker = FindFirstObjectByType<MenuInputBlocker>();
+            if (blocker) blocker.SetBlocked(true);
+            var player = FindFirstObjectByType<PlayerInteractor>();
+            if (player) foreach (var r in player.GetComponentsInChildren<Renderer>()) r.enabled = false;
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+
+            IsDriving = true;
+            lastPos = vehicle.transform.position;
+            distanceAccum = wearAccum = 0f;
+            if (CarSalesServices.Progress) CarSalesServices.Progress.Stats.testDrives++;
+            CarSalesServices.UI.Notify(driver is WheelVehicleController
+                ? (GameSettings.ManualGearbox
+                    ? "MANUAL: Left Shift / Left Ctrl shift up / down (Ctrl in 1st when stopped = R). W gas, S brake, Space handbrake, C camera, F get out."
+                    : "W accelerate, S brake (reverses when stopped), A/D steer, Space handbrake, C camera, F get out. E = park / refuel / wash / repair.")
+                : "W/S drive, A/D steer, Space brake, C camera. F = get out. E = park / refuel / wash / repair when prompted.");
+        }
+
+        /// <summary>Creates the driving object with the car's model, minimap marker and headlights. Returns the model.</summary>
+        Transform CreateVehicleShell()
+        {
             vehicle = new GameObject("Driving_" + car.Definition.displayName) { layer = 2 };   // Ignore Raycast
             vehicle.transform.SetPositionAndRotation(car.transform.position + Vector3.up * 0.2f, car.transform.rotation);
-            var cc = vehicle.AddComponent<CharacterController>();
-            cc.radius = 1.0f;
-            cc.height = 2.0f;
-            cc.center = new Vector3(0f, 1.0f, 0f);
-            cc.stepOffset = 0.35f;
-            cc.slopeLimit = 35f;
             var model = Instantiate(car.Definition.displayPrefab, vehicle.transform);
             model.transform.localPosition = Vector3.zero;
             model.transform.localRotation = Quaternion.identity;
+            foreach (var col in model.GetComponentsInChildren<Collider>()) DestroyImmediate(col);   // the vehicle makes its own colliders
+            UIFactory.SetLayer(model, 2);
             var visual = model.GetComponent<CarVisual>();
             if (visual) visual.Apply(car.Data.paintColor, 1f - car.Data.cleanliness / 100f);
+            CarDamageVisual.Apply(model, car.Data);
+            vehicleModel = model;
             MinimapMarker.Attach(vehicle, new Color(0.2f, 0.95f, 0.95f), 3.5f);
             var lightGo = new GameObject("Headlights");
             lightGo.transform.SetParent(vehicle.transform, false);
@@ -136,33 +220,7 @@ namespace CarSales
             headlights.spotAngle = 70f;
             headlights.intensity = 4f;
             headlights.color = new Color(1f, 0.95f, 0.85f);
-
-            vehicleController = vehicle.AddComponent<ArcadeCarController>();
-            vehicleController.MoveAction = move;
-            vehicleController.BrakeAction = brake;
-            vehicleController.OnCrash += HandleCrash;
-            car.gameObject.SetActive(false);
-
-            cam = Camera.main.transform;
-            camParent = cam.parent;
-            camLocalPos = cam.localPosition;
-            camLocalRot = cam.localRotation;
-            cam.SetParent(vehicle.transform, false);
-            cam.localPosition = cameraOffset;
-            cam.localRotation = Quaternion.Euler(cameraPitch, 0f, 0f);
-
-            blocker = FindFirstObjectByType<MenuInputBlocker>();
-            if (blocker) blocker.SetBlocked(true);
-            var player = FindFirstObjectByType<PlayerInteractor>();
-            if (player) foreach (var r in player.GetComponentsInChildren<Renderer>()) r.enabled = false;
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
-
-            IsDriving = true;
-            lastPos = vehicle.transform.position;
-            distanceAccum = 0f;
-            if (CarSalesServices.Progress) CarSalesServices.Progress.Stats.testDrives++;
-            CarSalesServices.UI.Notify("W/S drive, A/D steer, Space brake. F = get out. E = park / refuel / wash / repair when prompted.");
+            return model.transform;
         }
 
         void Update()
@@ -175,12 +233,19 @@ namespace CarSales
             lastPos = p;
             if (meters > 0f && meters < 20f)
             {
-                car.Data.fuel = Mathf.Max(0f, car.Data.fuel - meters / 1000f * fuelPercentPerKm);
+                float rate = driver is WheelVehicleController ? profile.energyPercentPerKm : fuelPercentPerKm;
+                car.Data.fuel = Mathf.Max(0f, car.Data.fuel - FuelModel.PercentUsed(meters, driver.Load, rate));
                 distanceAccum += meters;
+                wearAccum += meters;
                 if (distanceAccum >= 1000f) { car.Data.mileage += 1; distanceAccum -= 1000f; }
+                if (wearAccum >= 200f)
+                {
+                    CarParts.Wear(car.Data, wearAccum / 1000f, 1f + driver.Load * 0.6f);
+                    wearAccum = 0f;
+                }
             }
-            vehicleController.OutOfFuel = car.Data.fuel <= 0f;
-            if (vehicleController.OutOfFuel && !warnedEmpty)
+            driver.OutOfFuel = car.Data.fuel <= 0f;
+            if (driver.OutOfFuel && !warnedEmpty)
             {
                 warnedEmpty = true;
                 CarSalesServices.UI.Error("Out of fuel! Get out (F) and call a tow truck from your phone (P).");
@@ -228,14 +293,21 @@ namespace CarSales
             ContextPrompt = "";
         }
 
-        void HandleCrash(float impactSpeed)
+        void HandleImpact(VehicleImpact impact)
         {
-            float damage = Mathf.Round(Mathf.Clamp(impactSpeed * 0.4f, 2f, 12f));
-            CarParts.Damage(car.Data, damage);
+            if (!car) return;
+            var p = impact.LocalPoint;
+            var zone = ComponentCatalog.ZoneFromLocalPoint(p.x, p.y, p.z, carBounds.extents.x, carBounds.extents.z, carBounds.max.y);
+            float damage = Mathf.Round(Mathf.Clamp((impact.Speed - 2f) * 2.2f, 1f, 30f));
+            float before = car.Data.condition;
+            CarParts.Damage(car.Data, zone, damage);
             if (car.Data.state == CarState.Ready && car.Data.condition < CarValueCalculator.RepairThreshold)
                 car.Data.state = CarState.NeedsRepair;
+            if (driver is WheelVehicleController physics) physics.SetEffects(CarParts.Effects(car.Data));
+            CarDamageVisual.Apply(vehicleModel, car.Data);
             CarSalesServices.PlaySfx(Sfx.Crash);
-            CarSalesServices.UI.Error($"CRASH! Body damaged. Condition now {car.Data.condition:0}%");
+            CarSalesServices.UI.Error($"CRASH! {char.ToUpper(ComponentCatalog.ZoneName(zone)[0])}{ComponentCatalog.ZoneName(zone).Substring(1)} damaged. " +
+                                      $"Condition {before:0}% -> {car.Data.condition:0}%");
         }
 
         /// <summary>Gets out: the car is parked exactly where it is, the player stands next to it.</summary>
@@ -253,12 +325,16 @@ namespace CarSales
                 parkPos.y = hit.point.y;
             Vector3 exitPos = parkPos - Quaternion.Euler(0f, yaw, 0f) * Vector3.right * 2.3f;
 
+            if (vehicleCamera) Destroy(vehicleCamera);
+            vehicleCamera = null;
             if (cam)
             {
                 cam.SetParent(camParent, false);
                 cam.localPosition = camLocalPos;
                 cam.localRotation = camLocalRot;
             }
+            if (driver != null) driver.OnImpact -= HandleImpact;
+            driver = null;
             if (vehicle) Destroy(vehicle);
 
             if (car)

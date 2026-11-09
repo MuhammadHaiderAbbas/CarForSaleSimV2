@@ -16,7 +16,7 @@ namespace CarSales.Installer
     {
         const string SessionKey = "CarSales.DepsChecked";
         // Input System last: enabling its backend restarts the editor.
-        static readonly string[] Required = { "com.unity.ugui", "com.unity.ai.navigation", "com.unity.inputsystem" };
+        static readonly string[] Required = { "com.unity.ugui", "com.unity.ai.navigation", "com.unity.test-framework", "com.unity.inputsystem" };
         const string QueueKey = "CarSales.InstallQueue";
         static ListRequest listRequest;
         static bool manual;

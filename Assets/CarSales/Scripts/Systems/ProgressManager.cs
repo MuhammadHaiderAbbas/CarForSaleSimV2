@@ -1,3 +1,4 @@
+using CarSales.Foundation;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -98,7 +99,7 @@ namespace CarSales
                 var o = objectives[ObjectiveIndex];
                 ObjectiveIndex++;
                 changed = true;
-                if (o.reward > 0) CarSalesServices.Economy.AddMoney(o.reward);
+                if (o.reward > 0) CarSalesServices.Economy.AddMoney(o.reward, TxCategory.Rewards, "Goal: " + o.text);
                 CarSalesServices.UI.Success("Goal complete!", o.text + (o.reward > 0 ? $"  (+${o.reward:N0})" : ""));
                 if (CarSalesServices.Messages)
                     CarSalesServices.Messages.Add(MessageType.Goal, "Goal complete", o.text + (o.reward > 0 ? $"\nReward: ${o.reward:N0}" : ""));
@@ -132,7 +133,9 @@ namespace CarSales
         public bool OnDayEnded()
         {
             Stats.daysPlayed++;
-            DaysInDebt = CarSalesServices.Economy.Money < 0 ? DaysInDebt + 1 : 0;
+            // Phase 9: being inside your overdraft isn't "in debt"; going past it is.
+            int floor = CarSalesServices.Business ? -CarSalesServices.Business.OverdraftLimit : 0;
+            DaysInDebt = CarSalesServices.Economy.Money < floor ? DaysInDebt + 1 : 0;
             if (DaysInDebt >= bankruptcyDays)
             {
                 IsGameOver = true;

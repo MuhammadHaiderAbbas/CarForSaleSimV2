@@ -1,0 +1,243 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f01e0220130d4dc40b1d3bf20fe2c869, type: 3}
+  m_Name: Layout_DefaultTown
+  m_EditorClassIdentifier: CarSales.Runtime::CarSales.WorldLayout
+  sites:
+  - id: autoworld
+    name: AUTO WORLD
+    template: 0
+    buildingAssetId: 
+    interiorAssetId: 
+    position: {x: 0, y: 0, z: 0}
+    yaw: 0
+    price: 0
+    dailyCost: 0
+    function: 0
+  - id: dealer_downtown
+    name: Downtown Motors
+    template: 0
+    buildingAssetId: 
+    interiorAssetId: 
+    position: {x: -140, y: 0, z: 0}
+    yaw: 0
+    price: 0
+    dailyCost: 0
+    function: 0
+  - id: dealer_luxury
+    name: Luxury Lane
+    template: 0
+    buildingAssetId: 
+    interiorAssetId: 
+    position: {x: 140, y: 0, z: 0}
+    yaw: 0
+    price: 0
+    dailyCost: 0
+    function: 0
+  - id: FuelStation
+    name: Fuel Station
+    template: 0
+    buildingAssetId: 
+    interiorAssetId: 
+    position: {x: 40, y: 0, z: -38}
+    yaw: 180
+    price: 0
+    dailyCost: 0
+    function: 4
+  - id: MechanicWorkshop
+    name: Mechanic Workshop
+    template: 0
+    buildingAssetId: 
+    interiorAssetId: 
+    position: {x: -45, y: 0, z: -38}
+    yaw: 180
+    price: 0
+    dailyCost: 0
+    function: 2
+  - id: ServiceCentre
+    name: AUTO WORLD Service Centre
+    template: 0
+    buildingAssetId: 
+    interiorAssetId: 
+    position: {x: 50, y: 0, z: -2}
+    yaw: 0
+    price: 0
+    dailyCost: 0
+    function: 1
+  - id: PartsDirect
+    name: Parts Direct
+    template: 0
+    buildingAssetId: 
+    interiorAssetId: 
+    position: {x: -12, y: 0, z: -38}
+    yaw: 180
+    price: 0
+    dailyCost: 0
+    function: 9
+  - id: MapleClose
+    name: Maple Close
+    template: 0
+    buildingAssetId: 
+    interiorAssetId: 
+    position: {x: 215, y: 0, z: 10}
+    yaw: 0
+    price: 0
+    dailyCost: 0
+    function: 10
+  - id: CarWashCenter
+    name: Car Wash
+    template: 0
+    buildingAssetId: 
+    interiorAssetId: 
+    position: {x: 100, y: 0, z: -38}
+    yaw: 180
+    price: 0
+    dailyCost: 0
+    function: 3
+  - id: UsedCarMarket
+    name: Used Car Market
+    template: 0
+    buildingAssetId: 
+    interiorAssetId: 
+    position: {x: -100, y: 0, z: -38}
+    yaw: 180
+    price: 0
+    dailyCost: 0
+    function: 6
+  - id: AuctionCenter
+    name: Auction Center
+    template: 0
+    buildingAssetId: 
+    interiorAssetId: 
+    position: {x: -110, y: 0, z: 112}
+    yaw: 0
+    price: 0
+    dailyCost: 0
+    function: 5
+  - id: Home_Trailer
+    name: Starter Trailer
+    template: 0
+    buildingAssetId: 
+    interiorAssetId: 
+    position: {x: 40, y: 0, z: 106}
+    yaw: 0
+    price: 0
+    dailyCost: 0
+    function: 7
+  - id: Home_House
+    name: Suburban House
+    template: 0
+    buildingAssetId: 
+    interiorAssetId: 
+    position: {x: 95, y: 0, z: 106}
+    yaw: 0
+    price: 0
+    dailyCost: 0
+    function: 7
+  - id: Home_Villa
+    name: Hillside Villa
+    template: 0
+    buildingAssetId: 
+    interiorAssetId: 
+    position: {x: 152, y: 0, z: 106}
+    yaw: 0
+    price: 0
+    dailyCost: 0
+    function: 7
+  - id: RentalApartments
+    name: Rental Apartments
+    template: 0
+    buildingAssetId: 
+    interiorAssetId: 
+    position: {x: -40, y: 0, z: 106}
+    yaw: 0
+    price: 0
+    dailyCost: 0
+    function: 8
+  - id: OfficeTower
+    name: Office Tower
+    template: 0
+    buildingAssetId: 
+    interiorAssetId: 
+    position: {x: -175, y: 0, z: 106}
+    yaw: 0
+    price: 0
+    dailyCost: 0
+    function: 8
+  - id: ParkingGarage
+    name: Parking Garage
+    template: 0
+    buildingAssetId: 
+    interiorAssetId: 
+    position: {x: 200, y: 0, z: 106}
+    yaw: 0
+    price: 0
+    dailyCost: 0
+    function: 8
+  roads:
+  - a:
+      x: -250
+      z: -27
+    b:
+      x: -70
+      z: -27
+    speedLimit: 13.4
+  - a:
+      x: -70
+      z: -27
+    b:
+      x: 70
+      z: -27
+    speedLimit: 13.4
+  - a:
+      x: 70
+      z: -27
+    b:
+      x: 250
+      z: -27
+    speedLimit: 13.4
+  - a:
+      x: -250
+      z: 95
+    b:
+      x: -70
+      z: 95
+    speedLimit: 13.4
+  - a:
+      x: -70
+      z: 95
+    b:
+      x: 70
+      z: 95
+    speedLimit: 13.4
+  - a:
+      x: 70
+      z: 95
+    b:
+      x: 250
+      z: 95
+    speedLimit: 13.4
+  - a:
+      x: -70
+      z: -27
+    b:
+      x: -70
+      z: 95
+    speedLimit: 11
+  - a:
+      x: 70
+      z: -27
+    b:
+      x: 70
+      z: 95
+    speedLimit: 11
+  userRoads: []

@@ -1,0 +1,67 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 57cd2cb3d0e0e2b4d9bd687580eea2dd, type: 3}
+  m_Name: Physics_sports_stallion
+  m_EditorClassIdentifier: CarSales.Runtime::CarSales.VehiclePhysicsProfileAsset
+  profile:
+    name: Stallion R
+    vehicleClass: 7
+    powertrain: 0
+    drivetrain: 1
+    engine:
+      idleRpm: 900
+      redlineRpm: 7500
+      peakTorqueNm: 530
+      peakTorqueRpm: 4500
+      plateauEndRpm: 5800
+      engineBrakeNm: 84.799995
+    gearbox:
+      ratios:
+      - 3
+      - 2.1
+      - 1.6
+      - 1.25
+      - 1
+      - 0.82
+      reverseRatio: 2.85
+      finalDrive: 3.7
+      upshiftRpm: 7200
+      downshiftRpm: 2800
+      shiftTime: 0.25
+      efficiency: 0.9
+    electric:
+      maxTorqueNm: 300
+      maxPowerKw: 150
+      maxRpm: 12000
+      ratio: 9
+      regenFraction: 0.25
+      efficiency: 0.92
+    chassis:
+      massKg: 1450
+      centerOfMassHeight: 0.4
+      wheelRadius: 0.34
+      suspensionDistance: 0.2
+      springScale: 1
+      damperScale: 1
+      forwardGrip: 1
+      sidewaysGrip: 1.05
+      maxSteerAngle: 34
+      highSpeedSteerFactor: 0.35
+      antiRollForce: 6000
+      brakeStrength: 1
+      frontBrakeBias: 0.65
+      handbrakeTorque: 2500
+      dragArea: 0.62
+      rollingResistance: 0.013
+      downforce: 1.2
+      topSpeedLimitKmh: 290
+    energyPercentPerKm: 4

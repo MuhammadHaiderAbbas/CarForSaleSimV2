@@ -1,0 +1,57 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3014fd67bbe3b48448a155eff429e92f, type: 3}
+  m_Name: CarSalesAssetRegistry
+  m_EditorClassIdentifier: CarSales.Runtime::CarSales.AssetRegistry
+  records:
+  - id: DodgeDartGt
+    displayName: dodge_dart_gt
+    category: 0
+    sourcePath: Assets/CarSales/Art/Vehicle/DodgeDartGt/Source/dodge_dart_gt.glb
+    prefab: {fileID: 7198120978840778526, guid: 3a6f1d91500677c4ba93af58e51bdf49, type: 3}
+    carDefinition: {fileID: 11400000, guid: 0cbc3de57c414dc46bbb5ebc3701ef8f, type: 2}
+    licence:
+      source: 
+      sourceUrl: 
+      author: 
+      authorUrl: 
+      licence: 1
+      licenceUrl: 
+      attributionText: 
+      purchaseRef: 
+      dateAcquired: 2026-11-08
+      notes: 
+    importedAtUtc: 2026-11-08T18:59:13.2159581Z
+    version: 1
+    notes: 
+    jobJson: '{"modelPath":"Assets/CarSales/Art/Vehicle/DodgeDartGt/Source/dodge_dart_gt.glb","category":0,"displayName":"dodge_dart_gt","licence":{"source":"","sourceUrl":"","author":"","authorUrl":"","licence":1,"licenceUrl":"","attributionText":"","purchaseRef":"","dateAcquired":"2026-11-08","notes":""},"scale":100.0,"yaw":0,"zUpFix":false,"suggestion":"Measured 0.046 m; looks like a unit mix-up, scaled x100 to 4.65 m.","wheelPaths":["Dodge_Dart_GT_body_0.fbx/RootNode/LOD0/wheel_fl_tire/wheel_fl_tire_Tire","Dodge_Dart_GT_body_0.fbx/RootNode/LOD0/wheel_fr_tire/wheel_fr_tire_Tire","Dodge_Dart_GT_body_0.fbx/RootNode/LOD0/wheel_bl_tire/wheel_bl_tire_Tire","Dodge_Dart_GT_body_0.fbx/RootNode/LOD0/wheel_br_tire/wheel_br_tire_Tire"],"paintMaterials":["CarBody"],"brand":"Imported","carCategory":1,"year":2018,"basePrice":20000,"fuelType":"Petrol","transmission":"Automatic"}'
+  - id: AmericanHouse
+    displayName: american_house
+    category: 1
+    sourcePath: Assets/CarSales/Art/Vehicle/AmericanHouse/Source/american_house.glb
+    prefab: {fileID: 8483205785304312682, guid: 52d2d907c93db25479b31c118f28eb1a, type: 3}
+    carDefinition: {fileID: 0}
+    licence:
+      source: 
+      sourceUrl: 
+      author: 
+      authorUrl: 
+      licence: 1
+      licenceUrl: 
+      attributionText: 
+      purchaseRef: 
+      dateAcquired: 2026-11-08
+      notes: 
+    importedAtUtc: 2026-11-08T19:08:38.6837278Z
+    version: 3
+    notes: 
+    jobJson: '{"modelPath":"Assets/CarSales/Art/Vehicle/AmericanHouse/Source/american_house.glb","category":1,"displayName":"american_house","licence":{"source":"","sourceUrl":"","author":"","authorUrl":"","licence":1,"licenceUrl":"","attributionText":"","purchaseRef":"","dateAcquired":"2026-11-08","notes":""},"scale":1.0,"yaw":0,"zUpFix":false,"suggestion":"Size looks right.","wheelPaths":["","","",""],"paintMaterials":[],"brand":"Imported","carCategory":1,"year":2018,"basePrice":20000,"fuelType":"Petrol","transmission":"Automatic"}'

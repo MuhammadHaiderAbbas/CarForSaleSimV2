@@ -1,3 +1,4 @@
+using CarSales.Foundation;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -97,7 +98,7 @@ namespace CarSales
             message = "";
             if (m == null || m.type != MessageType.SellerOffer || m.resolved) { message = "This offer is no longer available."; return false; }
             if (DealershipManager.FindFreeSpotAnywhere(out _) == null) { message = "No free parking spot at your dealerships! Sell a car, expand, or buy another dealership."; return false; }
-            if (!CarSalesServices.Economy.TrySpend(m.offerPrice)) { message = "Not enough money!"; return false; }
+            if (!CarSalesServices.Economy.TrySpend(m.offerPrice, TxCategory.VehiclePurchase, $"Private seller - {m.offerCar.Name}", m.offerCar.instanceId)) { message = "Not enough money!"; return false; }
 
             var car = m.offerCar;
             car.purchasePrice = m.offerPrice;

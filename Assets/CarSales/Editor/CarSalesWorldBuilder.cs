@@ -42,9 +42,12 @@ namespace CarSales.EditorTools
             Progress("Town services", 0.6f);
             BuildFuelStation(Site(env, "FuelStation", new Vector3(40f, 0f, -38f), 180f), m);
             BuildWorkshop(Site(env, "MechanicWorkshop", new Vector3(-45f, 0f, -38f), 180f), m, db);
+            BuildServiceCentre(Site(env, "ServiceCentre", new Vector3(50f, 0f, -2f), 0f), m);
+            BuildPartsShop(Site(env, "PartsDirect", new Vector3(-12f, 0f, -38f), 180f), m);
+            BuildMapleClose(Site(env, "MapleClose", new Vector3(215f, 0f, 10f), 0f), m);
             BuildCarWashCenter(Site(env, "CarWashCenter", new Vector3(100f, 0f, -38f), 180f), m);
             BuildUsedCarMarket(Site(env, "UsedCarMarket", new Vector3(-100f, 0f, -38f), 180f), m, carDisplayPrefab);
-            BuildAuctionCenter(Site(env, "AuctionCenter", new Vector3(-110f, 0f, 112f), 0f), m);
+            BuildAuctionCenter(Site(env, "AuctionCenter", new Vector3(-110f, 0f, 112f), 0f), m, carDisplayPrefab);
 
             Progress("Homes & properties", 0.65f);
             refs.playerStart = BuildHome(Site(env, "Home_Trailer", new Vector3(40f, 0f, 106f), 0f), m, PropertyManager.StarterHome, "Starter Trailer", 0);
@@ -73,6 +76,26 @@ namespace CarSales.EditorTools
             g.localPosition = pos;
             g.localRotation = Quaternion.Euler(0f, yaw, 0f);
             return g;
+        }
+
+        /// <summary>Group for placeholder primitives that the Asset Studio can replace with an imported model.</summary>
+        static Transform Slot(Transform parent, string name, Vector3 pos, PlaceholderKind kind, Vector3 footprint, float yaw = 0f)
+        {
+            var g = new GameObject(name).transform;
+            g.SetParent(parent, false);
+            g.localPosition = pos;
+            var slot = g.gameObject.AddComponent<PlaceholderSlot>();
+            slot.kind = kind;
+            slot.footprint = footprint;
+            slot.yaw = yaw;
+            return g;
+        }
+
+        static void StreetLamp(Transform g, Vector3 basePos, float headOffsetZ, float headLength, Mats m, float pole = 0.16f)
+        {
+            var t = Slot(g, "StreetLamp", basePos, PlaceholderKind.StreetLamp, new Vector3(0.6f, 6f, 0.6f), headOffsetZ < 0f ? 180f : 0f);
+            Solid(t, "LampPole", new Vector3(0f, 3f, 0f), new Vector3(pole, 6f, pole), m.metal);
+            Deco(t, "LampHead", PrimitiveType.Cube, new Vector3(0f, 5.9f, headOffsetZ), new Vector3(pole * 2.6f, 0.12f, headLength), m.lampGlow);
         }
 
         static GameObject Solid(Transform parent, string name, Vector3 pos, Vector3 size, Material mat)
@@ -214,16 +237,16 @@ namespace CarSales.EditorTools
             for (float x = -220f; x <= 220f; x += 40f)
                 foreach (float z in new[] { -32f, 100f })
                 {
-                    Solid(g, "LampPole", new Vector3(x, 3f, z), new Vector3(0.16f, 6f, 0.16f), m.metal);
-                    Deco(g, "LampHead", PrimitiveType.Cube, new Vector3(x, 5.9f, z + (z < 0 ? 0.8f : -0.8f)), new Vector3(0.4f, 0.12f, 1.4f), m.lampGlow);
+                    StreetLamp(g, new Vector3(x, 0f, z), z < 0 ? 0.8f : -0.8f, 1.4f, m);
                 }
         }
 
         static void Tree(Transform g, Vector3 pos, Mats m, float s)
         {
-            Solid(g, "TreeTrunk", pos + new Vector3(0f, 1.5f * s, 0f), new Vector3(0.35f, 3f, 0.35f) * s, m.trunk);
-            Deco(g, "TreeCanopy", PrimitiveType.Sphere, pos + new Vector3(0f, 3.9f * s, 0f), new Vector3(3.2f, 2.8f, 3.2f) * s, m.leaves);
-            Deco(g, "TreeCanopy2", PrimitiveType.Sphere, pos + new Vector3(0.5f, 5f * s, 0.3f), new Vector3(2.2f, 2f, 2.2f) * s, m.leaves);
+            var t = Slot(g, "Tree", pos, PlaceholderKind.Tree, new Vector3(3.2f, 6f, 3.2f) * s, Mathf.Abs(pos.x * 37f + pos.z * 11f) % 360f);
+            Solid(t, "TreeTrunk", new Vector3(0f, 1.5f * s, 0f), new Vector3(0.35f, 3f, 0.35f) * s, m.trunk);
+            Deco(t, "TreeCanopy", PrimitiveType.Sphere, new Vector3(0f, 3.9f * s, 0f), new Vector3(3.2f, 2.8f, 3.2f) * s, m.leaves);
+            Deco(t, "TreeCanopy2", PrimitiveType.Sphere, new Vector3(0.5f, 5f * s, 0.3f), new Vector3(2.2f, 2f, 2.2f) * s, m.leaves);
         }
 
         static void Plant(Transform g, Vector3 pos, Mats m, float scale)
@@ -236,11 +259,13 @@ namespace CarSales.EditorTools
         // ------------------------------------------------------------------ DEALERSHIPS
         /// <summary>Lot + glass showroom + spots + customers. Uses the original AUTO WORLD layout (world-aligned, road to the south).</summary>
         static GameObject BuildDealershipSite(Transform env, Mats m, TownRefs refs, CarDisplay carDisplayPrefab, CustomerAI customerPrefab,
-            string id, string name, string propertyId, Vector3 origin, bool isMain, float budgetMultiplier, bool premium)
+            string id, string name, string propertyId, Vector3 origin, bool isMain, float budgetMultiplier, bool premium,
+            GameObject building = null, bool computer = false, float yaw = 0f)
         {
             var site = new GameObject("Dealership_" + name);
             site.transform.SetParent(env, false);
             site.transform.localPosition = origin;
+            site.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
             var g = site.transform;
 
             // Lot
@@ -251,7 +276,8 @@ namespace CarSales.EditorTools
                 Deco(g, "AisleMark", PrimitiveType.Cube, new Vector3(i * 6f, 0.025f, -9f), new Vector3(1.6f, 0.01f, 0.25f), m.yellowLine);
             Solid(g, "Path_ToShowroom", new Vector3(0f, 0.015f, 6.5f), new Vector3(6f, 0.03f, 7f), m.sidewalk);
 
-            BuildShowroom(g, m, name, premium);
+            if (building) FitBuilding(g, building, new Vector3(0f, 0f, 17f), new Vector3(24f, 8f, 14f));   // an imported building instead of the glass showroom
+            else BuildShowroom(g, m, name, premium);
             BuildDealerProps(g, m, premium);
 
             var dealer = site.AddComponent<DealershipManager>();
@@ -275,9 +301,9 @@ namespace CarSales.EditorTools
             spots.Add(CreateSpot(spotsParent, index++, new Vector3(-6f, 0.12f, 17f), 180f, m, lines: false));
             spots.Add(CreateSpot(spotsParent, index++, new Vector3(6f, 0.12f, 17f), 180f, m, lines: false));
 
-            if (isMain) BuildOfficeComputer(g, m);
+            if (isMain || computer) BuildOfficeComputer(g, m);
             BuildShopSign(g, m);
-            if (!isMain) PropertyForSaleSign(g, new Vector3(14f, 0f, -19.5f), propertyId, m);
+            if (!isMain && !string.IsNullOrEmpty(propertyId)) PropertyForSaleSign(g, new Vector3(14f, 0f, -19.5f), propertyId, m);
 
             var spawnA = Child("CustomerSpawn_West", g, new Vector3(-26f, 0f, -9f));
             var spawnB = Child("CustomerSpawn_East", g, new Vector3(26f, 0f, -9f));
@@ -299,7 +325,33 @@ namespace CarSales.EditorTools
             refs.surfaces.Add(surface);
 
             AddMapPlace(site, name, "D", premium ? UIFactory.Gold : UIFactory.Accent, new Vector3(0f, 0.1f, -24f));
+            var siteInfo = site.AddComponent<Site>();
+            siteInfo.siteId = id;
+            siteInfo.displayName = name;
+            siteInfo.function = SiteFunction.Dealership;
+            siteInfo.entrance = Child("Entrance", g, new Vector3(0f, 0f, -22f));
             return site;
+        }
+
+        /// <summary>Puts an imported building where the showroom would be: scaled to the footprint, on the ground, with colliders.</summary>
+        static void FitBuilding(Transform g, GameObject prefab, Vector3 centre, Vector3 footprint, bool turn = true, bool colliders = true)
+        {
+            var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab, g);
+            go.name = turn ? "Building" : "Interior";
+            go.transform.localPosition = centre;
+            go.transform.localRotation = Quaternion.Euler(0f, turn ? 180f : 0f, 0f);   // a building's front (+Z) faces the lot
+            var rs = go.GetComponentsInChildren<Renderer>();
+            if (rs.Length == 0) return;
+            Bounds Bounds() { var b = rs[0].bounds; foreach (var r in rs) b.Encapsulate(r.bounds); return b; }
+            var bb = Bounds();
+            float k = Mathf.Min(footprint.x / Mathf.Max(0.01f, bb.size.x), footprint.z / Mathf.Max(0.01f, bb.size.z));
+            go.transform.localScale = Vector3.one * k;
+            bb = Bounds();
+            var target = g.TransformPoint(centre);
+            go.transform.position += new Vector3(target.x - bb.center.x, target.y - bb.min.y, target.z - bb.center.z);
+            if (colliders && go.GetComponentsInChildren<Collider>().Length == 0)
+                foreach (var mf in go.GetComponentsInChildren<MeshFilter>()) if (mf.sharedMesh) mf.gameObject.AddComponent<MeshCollider>().sharedMesh = mf.sharedMesh;
+            foreach (var t in go.GetComponentsInChildren<Transform>()) t.gameObject.isStatic = true;
         }
 
         static void BuildShowroom(Transform g, Mats m, string name, bool premium)
@@ -328,6 +380,7 @@ namespace CarSales.EditorTools
                     Deco(g, "CeilingLight", PrimitiveType.Cube, new Vector3(ix * 7.5f, 4.97f, 12.5f + iz * 4.5f), new Vector3(3f, 0.04f, 0.8f), m.ceilingLight);
             PointLight(g, new Vector3(-6f, 4.4f, 15f), 14f, 1.6f, new Color(1f, 0.96f, 0.9f));
             PointLight(g, new Vector3(6f, 4.4f, 19f), 14f, 1.6f, new Color(1f, 0.96f, 0.9f));
+            AddReflectionProbe(g, "ShowroomReflections", new Vector3(0f, 2.5f, 17f), new Vector3(24f, 5.2f, 14.2f));
 
             foreach (float x in new[] { -6f, 6f })
             {
@@ -350,8 +403,7 @@ namespace CarSales.EditorTools
                 Tree(g, p, m, 1f);
             foreach (var p in new[] { new Vector3(-19f, 0f, -20.5f), new Vector3(19f, 0f, -20.5f), new Vector3(-19f, 0f, 2.5f), new Vector3(19f, 0f, 2.5f) })
             {
-                Solid(g, "LampPole", p + new Vector3(0f, 3f, 0f), new Vector3(0.18f, 6f, 0.18f), m.metal);
-                Deco(g, "LampHead", PrimitiveType.Cube, p + new Vector3(0f, 5.9f, p.z < -9f ? 1f : -1f), new Vector3(0.45f, 0.12f, 0.6f), m.lampGlow);
+                StreetLamp(g, p, p.z < -9f ? 1f : -1f, 0.6f, m, 0.18f);
             }
             PointLight(g, new Vector3(0f, 6f, -9f), 26f, 1.4f, new Color(1f, 0.9f, 0.7f));
             var bannerMats = premium ? new[] { m.signBoard, m.flagWhite, m.signBoard } : new[] { m.flagRed, m.flagBlue, m.flagWhite };
@@ -366,10 +418,11 @@ namespace CarSales.EditorTools
             }
             foreach (float x in new[] { -8f, 8f })
             {
-                Solid(g, "BenchSeat", new Vector3(x, 0.45f, 7.6f), new Vector3(1.8f, 0.08f, 0.5f), m.desk);
-                Deco(g, "BenchBack", PrimitiveType.Cube, new Vector3(x, 0.78f, 7.85f), new Vector3(1.8f, 0.45f, 0.06f), m.desk);
-                Deco(g, "BenchLeg", PrimitiveType.Cube, new Vector3(x - 0.75f, 0.22f, 7.6f), new Vector3(0.08f, 0.44f, 0.45f), m.metal);
-                Deco(g, "BenchLeg", PrimitiveType.Cube, new Vector3(x + 0.75f, 0.22f, 7.6f), new Vector3(0.08f, 0.44f, 0.45f), m.metal);
+                var bench = Slot(g, "Bench", new Vector3(x, 0f, 7.6f), PlaceholderKind.Bench, new Vector3(1.8f, 1.0f, 0.6f), 180f);
+                Solid(bench, "BenchSeat", new Vector3(0f, 0.45f, 0f), new Vector3(1.8f, 0.08f, 0.5f), m.desk);
+                Deco(bench, "BenchBack", PrimitiveType.Cube, new Vector3(0f, 0.78f, 0.25f), new Vector3(1.8f, 0.45f, 0.06f), m.desk);
+                Deco(bench, "BenchLeg", PrimitiveType.Cube, new Vector3(-0.75f, 0.22f, 0f), new Vector3(0.08f, 0.44f, 0.45f), m.metal);
+                Deco(bench, "BenchLeg", PrimitiveType.Cube, new Vector3(0.75f, 0.22f, 0f), new Vector3(0.08f, 0.44f, 0.45f), m.metal);
             }
             foreach (float x in new[] { -4.5f, 4.5f })
             {
@@ -558,18 +611,58 @@ namespace CarSales.EditorTools
         }
 
         // ------------------------------------------------------------------ AUCTION CENTER
-        static void BuildAuctionCenter(Transform g, Mats m)
+        static void BuildAuctionCenter(Transform g, Mats m, CarDisplay carDisplayPrefab)
         {
-            Solid(g, "Building", new Vector3(0f, 4f, 9f), new Vector3(26f, 8f, 18f), m.buildings[1]);
-            for (int i = 0; i < 6; i++)
-                Deco(g, "Window", PrimitiveType.Cube, new Vector3(-10f + i * 4f, 4.5f, -0.03f), new Vector3(2.4f, 3f, 0.06f), m.windowsGlow);
+            // Sale hall you can walk into (phase 6): seats, stage, rostrum, big screen.
+            Solid(g, "HallFloor", new Vector3(0f, 0.02f, 9f), new Vector3(26f, 0.04f, 18f), m.floor);
+            Solid(g, "Wall_Back", new Vector3(0f, 4f, 18f), new Vector3(26.3f, 8f, 0.3f), m.buildings[1]);
+            Solid(g, "Wall_W", new Vector3(-13f, 4f, 9f), new Vector3(0.3f, 8f, 18f), m.buildings[1]);
+            Solid(g, "Wall_E", new Vector3(13f, 4f, 9f), new Vector3(0.3f, 8f, 18f), m.buildings[1]);
+            Solid(g, "Front_W", new Vector3(-8f, 4f, 0f), new Vector3(10f, 8f, 0.3f), m.buildings[1]);
+            Solid(g, "Front_E", new Vector3(8f, 4f, 0f), new Vector3(10f, 8f, 0.3f), m.buildings[1]);
+            Solid(g, "Front_Header", new Vector3(0f, 6.25f, 0f), new Vector3(6f, 3.5f, 0.3f), m.buildings[1]);
+            Solid(g, "Roof", new Vector3(0f, 8.15f, 9f), new Vector3(26.8f, 0.3f, 18.8f), m.roof);
+            for (int i = 0; i < 4; i++)
+                Deco(g, "Window", PrimitiveType.Cube, new Vector3(i < 2 ? -11f + i * 4f : 7f + (i - 2) * 4f, 4.5f, -0.18f), new Vector3(2.4f, 3f, 0.06f), m.windowsGlow);
             FrontSign(g, 26f, 0f, 7.2f, "AUCTION CENTER", new Color(1f, 0.85f, 0.4f), m.signBoard);
             Solid(g, "EntranceCanopy", new Vector3(0f, 3.4f, -1.8f), new Vector3(8f, 0.3f, 3.6f), m.signBoard);
             foreach (float x in new[] { -3.7f, 3.7f })
                 Solid(g, "CanopyPost", new Vector3(x, 1.7f, -3.4f), new Vector3(0.25f, 3.4f, 0.25f), m.metal);
             Solid(g, "Apron", new Vector3(0f, 0.012f, -5f), new Vector3(30f, 0.024f, 8f), m.asphalt);
-            var desk = InteractBox(g, "AuctionDesk", new Vector3(0f, 0.6f, -1.2f), new Vector3(3f, 1.2f, 0.9f), m.desk);
-            Deco(g, "Gavel", PrimitiveType.Cube, new Vector3(0.6f, 1.25f, -1.2f), new Vector3(0.3f, 0.1f, 0.1f), m.trunk);
+
+            for (int row = 0; row < 4; row++)
+                foreach (float x in new[] { -6f, 6f })
+                {
+                    Solid(g, "Bench", new Vector3(x, 0.45f, 3.5f + row * 1.7f), new Vector3(8f, 0.1f, 0.5f), m.desk);
+                    Deco(g, "BenchBack", PrimitiveType.Cube, new Vector3(x, 0.8f, 3.75f + row * 1.7f), new Vector3(8f, 0.5f, 0.06f), m.desk);
+                }
+            Solid(g, "Stage", new Vector3(0f, 0.12f, 12.6f), new Vector3(10f, 0.2f, 5f), m.platform);
+            Deco(g, "StageRing", PrimitiveType.Cube, new Vector3(0f, 0.23f, 10.05f), new Vector3(10f, 0.02f, 0.1f), m.ringGlow);
+            var stage = Child("Stage", g, new Vector3(0f, 0.24f, 12.6f));
+            stage.localRotation = Quaternion.Euler(0f, 90f, 0f);
+            Solid(g, "Rostrum", new Vector3(6.8f, 0.7f, 15.6f), new Vector3(2.2f, 1.4f, 1f), m.signBoard);
+            Deco(g, "Gavel", PrimitiveType.Cube, new Vector3(6.8f, 1.45f, 15.4f), new Vector3(0.3f, 0.1f, 0.1f), m.trunk);
+            var auctioneer = Deco(g, "Auctioneer", PrimitiveType.Capsule, new Vector3(6.8f, 1.6f, 16.4f), new Vector3(0.55f, 0.9f, 0.55f), m.customer);
+            auctioneer.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+            Deco(g, "ScreenPanel", PrimitiveType.Cube, new Vector3(-2f, 5.2f, 17.8f), new Vector3(7f, 3.2f, 0.1f), m.screen);
+            var screen = Text3D("Screen", g, new Vector3(-2f, 5.2f, 17.72f), "AUCTION CENTER", 9f, Color.white);
+            screen.rectTransform.sizeDelta = new Vector2(6.6f, 3f);
+            screen.enableAutoSizing = true;
+            screen.fontSizeMin = 1f;
+            screen.fontSizeMax = 9f;
+            PointLight(g, new Vector3(0f, 7f, 6f), 18f, 1.6f, new Color(1f, 0.92f, 0.8f));
+            PointLight(g, new Vector3(0f, 6f, 13f), 12f, 2.2f, new Color(1f, 0.95f, 0.9f));
+
+            var hall = g.gameObject.AddComponent<AuctionHall>();
+            hall.center = new Vector3(0f, 4f, 9f);
+            hall.size = new Vector3(26f, 8f, 18f);
+            hall.stage = stage;
+            hall.screen = screen;
+            Set(hall, "displayPrefab", carDisplayPrefab);
+
+            // Registration desk under the canopy.
+            var desk = InteractBox(g, "AuctionDesk", new Vector3(-2.2f, 0.6f, -1.2f), new Vector3(2.6f, 1.2f, 0.9f), m.desk);
+            Deco(g, "DeskScreen", PrimitiveType.Cube, new Vector3(-2.2f, 1.35f, -1.2f), new Vector3(0.6f, 0.4f, 0.05f), m.screen);
             PointLight(g, new Vector3(0f, 3f, -2f), 10f, 1.4f, new Color(1f, 0.9f, 0.75f));
             var zone = AddZone(g, ServiceType.Auction, "Auction Car Park", new Vector3(0f, 2f, -5f), new Vector3(30f, 4f, 8f),
                                new Vector3(-12f, 0.05f, -5f), new Vector3(-8f, 0.05f, -5f), new Vector3(8f, 0.05f, -5f), new Vector3(12f, 0.05f, -5f));
@@ -577,6 +670,25 @@ namespace CarSales.EditorTools
             var sd = desk.AddComponent<ServiceDesk>();
             sd.zone = zone;
             sd.type = ServiceType.Auction;
+
+            // Viewing yard with 12 numbered bays (east side).
+            Solid(g, "YardPad", new Vector3(25f, 0.01f, 7f), new Vector3(20f, 0.02f, 21f), m.asphalt);
+            SignText(g, new Vector3(25f, 3.2f, -3.6f), "VIEWING YARD", 6f, new Color(1f, 0.85f, 0.4f), new Vector2(8f, 1f));
+            Solid(g, "YardSignPost", new Vector3(25f, 1.4f, -3.4f), new Vector3(0.2f, 2.8f, 0.2f), m.metal);
+            var bays = new List<Transform>();
+            for (int r = 0; r < 2; r++)
+                for (int i = 0; i < 6; i++)
+                {
+                    float x = 17.2f + i * 3.15f, z = r == 0 ? 2.5f : 12f;
+                    var b = Child($"YardBay_{bays.Count + 1}", g, new Vector3(x, 0.03f, z));
+                    b.localRotation = Quaternion.Euler(0f, r == 0 ? 0f : 180f, 0f);
+                    bays.Add(b);
+                    Deco(g, "BayLine", PrimitiveType.Cube, new Vector3(x - 1.575f, 0.025f, z), new Vector3(0.1f, 0.01f, 5f), m.line);
+                    SignText(g, new Vector3(x, 0.6f, r == 0 ? -0.4f : 14.9f), (bays.Count).ToString(), 4f, Color.white, new Vector2(1f, 0.6f));
+                }
+            var yard = g.gameObject.AddComponent<AuctionYard>();
+            yard.bays = bays.ToArray();
+            Set(yard, "displayPrefab", carDisplayPrefab);
             AddMapPlace(g.gameObject, "Auction Center", "A", UIFactory.Bad, new Vector3(0f, 0.1f, -9f));
         }
 
@@ -690,11 +802,13 @@ namespace CarSales.EditorTools
 
         static void Building(Transform g, Vector3 pos, Vector3 size, Material mat, Mats m, bool facesSouth)
         {
-            Solid(g, "Building", pos + new Vector3(0f, size.y / 2f, 0f), size, mat);
-            float faceZ = facesSouth ? pos.z - size.z / 2f - 0.06f : pos.z + size.z / 2f + 0.06f;
+            // Front of a replacement model (+Z) faces the street: south-facing buildings turn 180°.
+            var t = Slot(g, "Building", pos, PlaceholderKind.Building, size, facesSouth ? 180f : 0f);
+            Solid(t, "Building", new Vector3(0f, size.y / 2f, 0f), size, mat);
+            float faceZ = facesSouth ? -size.z / 2f - 0.06f : size.z / 2f + 0.06f;
             int floors = Mathf.FloorToInt(size.y / 3.2f);
             for (int f = 1; f < floors; f++)
-                Deco(g, "Windows", PrimitiveType.Cube, new Vector3(pos.x, f * 3.2f + 0.6f, faceZ), new Vector3(size.x * 0.86f, 1.3f, 0.06f), m.windowsGlow);
+                Deco(t, "Windows", PrimitiveType.Cube, new Vector3(0f, f * 3.2f + 0.6f, faceZ), new Vector3(size.x * 0.86f, 1.3f, 0.06f), m.windowsGlow);
         }
     }
 }

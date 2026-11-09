@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 34f1338a8d4783249bc2e94856844be0, type: 3}
+  m_Name: Car_hatch_velo
+  m_EditorClassIdentifier: CarSales.Runtime::CarSales.CarDefinition
+  carId: hatch_velo
+  displayName: Velo
+  brand: Kestrel
+  category: 0
+  year: 2016
+  basePrice: 12000
+  popularity: 1
+  displayPrefab: {fileID: 3952395635293843607, guid: d0372b6d9f70b4e4f88e09fa61865db2, type: 3}
+  thumbnail: {fileID: 0}
+  fuelType: Petrol
+  transmission: Manual
+  description: Nimble city hatchback. Cheap to run and easy to park.
+  physicsOverride: {fileID: 11400000, guid: c5af7c7f92342eb40b0bb532394bea1f, type: 2}

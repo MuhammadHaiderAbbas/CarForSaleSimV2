@@ -1,3 +1,4 @@
+using CarSales.Foundation;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -71,7 +72,9 @@ namespace CarSales
             if (DealershipManager.FindFreeSpotAnywhere(out _) == null)
             { message = "No free parking spot at your dealerships! Sell a car, expand the lot, or buy another dealership."; return false; }
             int total = listing.purchasePrice + deliveryFee;
-            if (!CarSalesServices.Economy.TrySpend(total)) { message = $"Not enough money ({UIFactory.Money(total)} incl. delivery)."; return false; }
+            if (!CarSalesServices.Economy.CanAfford(total)) { message = $"Not enough money ({UIFactory.Money(total)} incl. delivery)."; return false; }
+            CarSalesServices.Economy.TrySpend(listing.purchasePrice, TxCategory.VehiclePurchase, $"Bought online - {listing.Name}", listing.instanceId);
+            CarSalesServices.Economy.TrySpend(deliveryFee, TxCategory.Delivery, $"Delivery - {listing.Name}", listing.instanceId);
 
             listing.state = CarValueCalculator.DefaultState(listing);
             Listings.Remove(listing);
@@ -86,7 +89,7 @@ namespace CarSales
         public bool TryBuyFromLot(CarDisplay listingDisplay, out string message)
         {
             var listing = listingDisplay.Data;
-            if (!CarSalesServices.Economy.TrySpend(listing.purchasePrice)) { message = "Not enough money!"; return false; }
+            if (!CarSalesServices.Economy.TrySpend(listing.purchasePrice, TxCategory.VehiclePurchase, $"Used Car Market - {listing.Name}", listing.instanceId)) { message = "Not enough money!"; return false; }
             listing.state = CarValueCalculator.DefaultState(listing);
             Vector3 pos = listingDisplay.transform.position;
             float yaw = listingDisplay.transform.eulerAngles.y;

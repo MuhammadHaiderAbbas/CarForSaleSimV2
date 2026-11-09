@@ -1,3 +1,4 @@
+using CarSales.Foundation;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -11,11 +12,13 @@ namespace CarSales
     public class VehicleRegistry : MonoBehaviour
     {
         [SerializeField] CarDisplay carDisplayPrefab;
+        public CarDisplay DisplayPrefab => carDisplayPrefab;
         [SerializeField] float fuelPricePerPercent = 0.9f;   // a full tank (100%) = $90
 
         readonly Dictionary<string, CarDisplay> displays = new Dictionary<string, CarDisplay>();
         public IEnumerable<CarDisplay> All => displays.Values.Where(d => d);
-        public float FuelPricePerPercent => fuelPricePerPercent;
+        /// <summary>Phase 8: today's fuel price (the world's fuel index moves it daily).</summary>
+        public float FuelPricePerPercent => fuelPricePerPercent * (CarSalesServices.World ? CarSalesServices.World.FuelIndex : 1f);
         public CarDisplay Prefab => carDisplayPrefab;
 
         void Awake() => CarSalesServices.Vehicles = this;
@@ -147,19 +150,19 @@ namespace CarSales
         }
 
         // ------------------------------------------------------------------ SERVICES
-        public int RefuelCost(CarInstance car) => Mathf.CeilToInt((100f - car.fuel) * fuelPricePerPercent);
+        public int RefuelCost(CarInstance car) => Mathf.CeilToInt((100f - car.fuel) * FuelPricePerPercent);
 
         public bool Refuel(CarDisplay car)
         {
             int cost = RefuelCost(car.Data);
             if (cost <= 0) { CarSalesServices.UI.Notify("The tank is already full."); return false; }
-            if (!CarSalesServices.Economy.TrySpend(cost))
+            if (!CarSalesServices.Economy.TrySpend(cost, TxCategory.Fuel, $"Fuel - {car.Definition.displayName}", car.Data.instanceId))
             {
                 // Buy as much as you can afford
                 int affordable = Mathf.Max(0, CarSalesServices.Economy.Money);
                 if (affordable <= 0) { CarSalesServices.UI.Error("Not enough money for fuel!"); return false; }
-                CarSalesServices.Economy.TrySpend(affordable);
-                car.Data.fuel = Mathf.Min(100f, car.Data.fuel + affordable / fuelPricePerPercent);
+                CarSalesServices.Economy.TrySpend(affordable, TxCategory.Fuel, $"Fuel (partial) - {car.Definition.displayName}", car.Data.instanceId);
+                car.Data.fuel = Mathf.Min(100f, car.Data.fuel + affordable / FuelPricePerPercent);
                 cost = affordable;
             }
             else car.Data.fuel = 100f;
@@ -176,7 +179,7 @@ namespace CarSales
             var d = car.Data;
             int value = CarValueCalculator.MarketValue(d);
             int profit = price - d.purchasePrice - d.repairSpent;
-            CarSalesServices.Economy.AddMoney(price);
+            CarSalesServices.Economy.AddMoney(price, TxCategory.VehicleSale, $"Sold {car.Definition.displayName}", d.instanceId);
             CarSalesServices.Economy.ChangeReputation(price <= value ? 2f : 0.5f);
             RemoveSoldCar(car, price, profit);
             CarSalesServices.PlaySfx(Sfx.Success);
@@ -193,7 +196,7 @@ namespace CarSales
             int profit = price - d.purchasePrice - d.repairSpent;
             if (CarSalesServices.TestDrive && CarSalesServices.TestDrive.IsDriving && CarSalesServices.TestDrive.CurrentCar == car)
                 CarSalesServices.TestDrive.EndDrive();
-            CarSalesServices.Economy.AddMoney(price);
+            CarSalesServices.Economy.AddMoney(price, TxCategory.VehicleSale, $"Wholesale - {car.Definition.displayName}", d.instanceId);
             RemoveSoldCar(car, price, profit);
             CarSalesServices.PlaySfx(Sfx.Coin);
             CarSalesServices.UI.Success("Wholesale complete", $"{car.Definition.displayName} sold to the wholesaler for {UIFactory.Money(price)}.");
@@ -203,6 +206,7 @@ namespace CarSales
         {
             var d = car.Data;
             d.state = CarState.Sold;
+            if (CarSalesServices.Business) CarSalesServices.Business.RecordSale(d, price);   // phase 9: accounts, VAT, analytics
             CarSalesServices.Inventory.Remove(d.instanceId);
             Despawn(d.instanceId);
             CarSalesServices.DayCycle.RegisterSale(price, profit);

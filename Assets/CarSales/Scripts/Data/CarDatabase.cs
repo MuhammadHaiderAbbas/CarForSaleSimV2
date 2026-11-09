@@ -10,5 +10,11 @@ namespace CarSales
 
         public CarDefinition Get(string id) => cars.Find(c => c && c.carId == id);
         public CarDefinition GetRandom() => cars[Random.Range(0, cars.Count)];
+
+        /// <summary>Resources name of the database Build Everything creates (Generated/Resources/CarSalesDatabase.asset).</summary>
+        public const string ResourceName = "CarSalesDatabase";
+
+        /// <summary>Fallback when a scene's reference to the database is missing.</summary>
+        public static CarDatabase LoadDefault() => Resources.Load<CarDatabase>(ResourceName);
     }
 }
